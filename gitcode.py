@@ -30,7 +30,7 @@ def reselect():
             c += 1
             z += 1
             print('rangetest')
-
+##think it might need another function to call here 
         for z in range(1, 30):
             if u > 0:
                 post_result = np.random.choice(choice_initial, p=[l_prob_hit_new, r_prob_hit_new])
