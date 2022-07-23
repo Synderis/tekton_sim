@@ -42,3 +42,4 @@ def reselect():
                 print(post_result)
                 mage_count += 1
                 z = mage_count
+reselect()
