@@ -582,7 +582,7 @@ def npc_style_checker(spec_or_four_tick, five_tick):
     return max_def_roll
 
 
-trials = 100000
+trials = 10000
 
 for x in range(trials):
     hit_metrics = Test(0, 0, time_parameter=0.0, phase='', idle_time=0)
