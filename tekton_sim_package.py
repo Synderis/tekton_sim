@@ -774,7 +774,7 @@ adjusted_ymax1 = remainder1[0] + 1
 first_graph.set(yticks=(np.arange(0, (adjusted_ymax1 * (2 * get_c_again)), step=get_c_again)),
                 ylim=(0, (adjusted_ymax1 * get_c_again)))
 first_graph.set(ylabel='number of killed tektons in sample')
-first_graph.set_title('number of tektons under 2:20 in ' + str(trials) + ' trials')
+first_graph.set_title('tekton density histogram of ' + str(trials) + ' trials')
 plt.xlabel('time of encounter in ticks')
 first_graph_xticks = (np.arange(75, 620, step=25))
 first_graph.set(xticks=first_graph_xticks, xlim=(75, 600))
