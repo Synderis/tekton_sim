@@ -92,6 +92,7 @@ two_hammer = 0
 anvils = [0] * 100
 times = []
 tick_times = []
+tick_times_one_anvil = []
 no_hammer_total = 0
 one_hammer_total = 0
 two_hammer_total = 0
@@ -498,6 +499,19 @@ def anvil_adjustment(veng):
     return tekton.hp
 
 
+def min_regen():
+    if tekton.hp > 0:
+        if tekton.hp < base_hp:
+            tekton.hp += 1
+            return tekton.hp
+        if tekton.defence < base_def:
+            tekton.defence += 1
+            return tekton.hp
+        return tekton.hp
+    else:
+        return tekton.hp
+
+
 def time():
     idle_total = hit_metrics.idle_time
     four_total = hit_metrics.four_tick_hit_counter * 4
@@ -568,7 +582,7 @@ def npc_style_checker(spec_or_four_tick, five_tick):
     return max_def_roll
 
 
-trials = 10000
+trials = 100000
 
 for x in range(trials):
     hit_metrics = Test(0, 0, time_parameter=0.0, phase='', idle_time=0)
@@ -590,18 +604,17 @@ for x in range(trials):
         vuln_check()
         pre_anvil()
         anvil_adjustment(True)
-        if tekton.hp < base_hp:
-            tekton.hp += 1
-        if tekton.defence < base_def:
-            tekton.defence += 1
+        min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped)
         anvil_adjustment(False)
+        min_regen()
         one_hammer = 0
         two_hammer = 0
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=False)
                 anvil_adjustment(False)
+                min_regen()
                 continue
             else:
                 time()
@@ -614,10 +627,7 @@ for x in range(trials):
         vuln_check()
         pre_anvil()
         anvil_adjustment(True)
-        if tekton.hp < base_hp:
-            tekton.hp += 1
-        if tekton.defence < base_def:
-            tekton.defence += 1
+        min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped)
         anvil_adjustment(False)
         one_hammer = 0
@@ -626,6 +636,7 @@ for x in range(trials):
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=False)
                 anvil_adjustment(False)
+                min_regen()
                 continue
             else:
                 time()
@@ -640,13 +651,13 @@ hist2, bin_edges2 = np.histogram(tick_times_raw, density=True)
 cum_cdf_raw = np.cumsum(hist2 * np.diff(bin_edges2))
 sub_115 = []
 sub_100 = []
-sub_115[:] = [x for x in times if x <= 75.0]
-sub_100[:] = [x for x in times if x <= 60.0]
+sub_115[:] = [x for x in times if x <= 125]
+sub_100[:] = [x for x in times if x <= 100]
 
-no_anvil_num = str(anvils[0]) + ' and ' + str(round(((anvils[0] / trials) * 100), 2)) + '%'
-one_anvil_num = str(anvils[1]) + ' and ' + str(round(((anvils[1] / trials) * 100), 2)) + '%'
-two_anvil_num = str(anvils[2]) + ' and ' + str(round(((anvils[2] / trials) * 100), 2)) + '%'
-three_anvil_num = str(anvils[3]) + ' and ' + str(round(((anvils[3] / trials) * 100), 2)) + '%'
+no_anvil_num = str(anvils[0]) + ', ' + str(round(((anvils[0] / trials) * 100), 2)) + '%'
+one_anvil_num = str(anvils[1]) + ', ' + str(round(((anvils[1] / trials) * 100), 2)) + '%'
+two_anvil_num = str(anvils[2]) + ', ' + str(round(((anvils[2] / trials) * 100), 2)) + '%'
+three_anvil_num = str(anvils[3]) + ', ' + str(round(((anvils[3] / trials) * 100), 2)) + '%'
 temp1 = p.number_to_words(trials)
 no_ham_rate_tot = (str(round(((no_h_one_a / trials) * 100), 2)) + '%')
 one_ham_rate_tot = (str(round(((one_h_one_a / trials) * 100), 2)) + '%')
@@ -654,19 +665,33 @@ two_ham_rate_tot = (str(round(((two_h_one_a / trials) * 100), 2)) + '%')
 one_ham_reset = (str(round((((one_h_one_a + two_h_one_a) / (
         one_hammer_total + two_hammer_total)) * 100), 2)) + '%')
 two_ham_reset = (str(round(((two_h_one_a / two_hammer_total) * 100), 2)) + '%')
-no_ham_rate = (str(no_h_one_a) + ' and ' + str(round(((no_h_one_a / anvils[1]) * 100), 2)) + '%')
-one_ham_rate = (str(one_h_one_a) + ' and ' + str(round(((one_h_one_a / anvils[1]) * 100), 2)) + '%')
-two_ham_rate = (str(two_h_one_a) + ' and ' + str(round(((two_h_one_a / anvils[1]) * 100), 2)) + '%')
+no_ham_rate = (str(no_h_one_a) + ', ' + str(round(((no_h_one_a / anvils[1]) * 100), 2)) + '%')
+one_ham_rate = (str(one_h_one_a) + ', ' + str(round(((one_h_one_a / anvils[1]) * 100), 2)) + '%')
+two_ham_rate = (str(two_h_one_a) + ', ' + str(round(((two_h_one_a / anvils[1]) * 100), 2)) + '%')
 sub_115_df = (str(round((((np.count_nonzero(sub_115)) / anvils[1]) * 100), 2)) + '%')
 sub_100_df = (str(round((((np.count_nonzero(sub_100)) / anvils[1]) * 100), 2)) + '%')
 table_dataframe = pd.DataFrame({('trials = ' + str(trials)): ['no anvil', 'one anvil', 'two anvil', 'three or more'],
-                                'total and %': [no_anvil_num, one_anvil_num, two_anvil_num, three_anvil_num],
+                                'total, % total': [no_anvil_num, one_anvil_num, two_anvil_num, three_anvil_num],
                                 'sub 1:15 %': ['N/A', sub_115_df, '0', '0'],
                                 'sub 1:00 %': ['N/A', sub_100_df, '0', '0']})
 table_dataframe2 = pd.DataFrame({('trials = ' + str(trials)): ['no hammer', 'one hammer', 'two hammer'],
-                                 '% of total 1 anvil': [no_ham_rate, one_ham_rate, two_ham_rate],
+                                 'total, % of 1 anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
                                  '% of total trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
                                  'reset chance': ['N/A', one_ham_rate, two_ham_rate]})
+minutes_list = [' 0:45', ' 0:48', ' 0:51', ' 0:54', ' 0:57', ' 1:00', ' 1:03', ' 1:06', ' 1:09', ' 1:12', ' 1:15',
+                ' 1:18', ' 1:21', ' 1:24', ' 1:27', ' 1:30', ' 1:33', ' 1:36', ' 1:39', ' 1:42', ' 1:45', ' 1:48',
+                ' 1:51', ' 1:54', ' 1:57', ' 2:00', ' 2:03', ' 2:06', ' 2:09', ' 2:12', ' 2:15', ' 2:18', ' 2:21',
+                ' 2:24', ' 2:27', ' 2:30', ' 2:33', ' 2:36', ' 2:39', ' 2:42', ' 2:45', ' 2:48']
+minutes_list_big_step = [' 0:00', ' 0:15', ' 0:30', ' 0:45', ' 1:00', ' 1:15', ' 1:30', ' 1:45', ' 2:00', ' 2:15',
+                         ' 2:30', ' 2:45', ' 3:00', ' 3:15', ' 3:30', ' 3:45', ' 4:00', ' 4:15', ' 4:30', ' 4:45',
+                         ' 5:00', ' 5:15', ' 5:30', ' 5:45', ' 6:00', ' 6:15', ' 6:30', ' 6:45', ' 7:00', ' 7:15',
+                         ' 7:30', ' 7:45', ' 8:00', ' 8:15', ' 8:30', ' 8:45', ' 9:00', ' 9:15', ' 9:30', ' 9:45',
+                         '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15',
+                         '12:30', '12:45', '13:00', '13:15', '13:30', '13:45']
+minutes_list_bigger_step = [' 0:00', ' 0:25', ' 0:50', ' 1:15', ' 1:40', ' 2:05', ' 2:30', ' 2:55', ' 3:20', ' 3:45',
+                            ' 4:10', ' 4:35', ' 5:00', ' 5:25', ' 5:50', ' 6:15', ' 6:40', ' 7:05', ' 7:30', ' 7:55',
+                            ' 8:20', ' 8:45', ' 9:10', ' 9:35', '10:00', '10:25', '10:50', '11:15', '11:40', '12:05',
+                            '12:30', '12:55', '13:20', '13:45']
 
 plt.subplot(3, 2, 1)
 font_size = 10
@@ -699,7 +724,7 @@ data_x, data_y = fourth_graph.lines[0].get_data()
 data_x2, data_y2 = fourth_empirical_graph.lines[0].get_data()
 yi = .99  # coordinate where to find th
 xi = np.interp(yi, data_y, data_x)
-yi2 = .99  # coordinate where to find th
+yi2 = .99
 xi2 = np.interp(yi2, data_y2, data_x2)
 fourth_graph.set_title('cumulative probability of killing tekton')
 fourth_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi))
@@ -710,12 +735,11 @@ sns.kdeplot(ax=aux_axis_fourth, bins=80)
 fourth_graph.legend(labels=('theoretical', 'empirical'))
 fourth_graph.set(ylabel='probability of killing tekton')
 fourth_graph.set(yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1))
-aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)), xlabel='time of encounter in seconds')
+aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)),
+                    xlabel='time of encounter in minutes and seconds')
+aux_axis_fourth.set_xticklabels(minutes_list_bigger_step, rotation=45)
 fourth_graph.grid('visible')
-times[:] = [x for x in times if x <= 147]
-tick_times[:] = [x for x in tick_times if x <= 245]
-new_list = pd.DataFrame(tick_times[:])
-new_new_list = pd.DataFrame(times[:])
+tick_times_one_anvil[:] = [x for x in tick_times if x <= 150]
 np.mean(tick_times)
 
 n = pd.Series(np.random.randn(trials))
@@ -724,26 +748,26 @@ first_q3 = float(np.quantile(n, .75))
 iqr = first_q3 - first_q1
 bin_width = (2 * iqr) / ((len(n)) ** (1. / 3.))
 bin_number = int(np.ceil((np.max(n) - np.min(n)) / bin_width))
-m = pd.Series(np.random.randn(len(new_new_list)))
+m = pd.Series(np.random.randn(len(tick_times_one_anvil)))
 second_q1 = float(np.quantile(m, .25))
 second_q3 = float(np.quantile(m, .75))
 iqr_second = second_q3 - second_q1
-bin_width_second = (2 * iqr) / ((len(m)) ** (1. / 3.))
-bin_number_second = int(np.ceil((m.max() - m.min()) / bin_width))
+bin_width_second = (2 * iqr_second) / ((len(m)) ** (1. / 3.))
+bin_number_second = int(np.ceil((m.max() - m.min()) / bin_width_second))
 if trials == 1000:
-    tick_mod = 200
+    tick_mod = 100
 elif trials == 10000:
-    tick_mod = 400
+    tick_mod = 200
 else:
-    tick_mod = 800
+    tick_mod = 400
 
 xd = []
 for each in np.arange(45, 170, step=5):
     xd.append(str(each))
 get_c_again = int(trials / tick_mod)
 plt.subplot(3, 2, 5)
-first_graph = sns.histplot(new_list, kde=True, bins=bin_number, color='darkblue', legend=False)
-ymax_array1, bin_edges1 = np.histogram(new_list, bins=bin_number, density=False)
+first_graph = sns.histplot(tick_times, kde=True, bins=bin_number, color='darkblue', legend=False)
+ymax_array1, bin_edges1 = np.histogram(tick_times, bins=bin_number, density=False)
 y_max1 = np.max(ymax_array1)
 remainder1 = divmod(y_max1, get_c_again)
 adjusted_ymax1 = remainder1[0] + 1
@@ -752,33 +776,49 @@ first_graph.set(yticks=(np.arange(0, (adjusted_ymax1 * (2 * get_c_again)), step=
 first_graph.set(ylabel='number of killed tektons in sample')
 first_graph.set_title('number of tektons under 2:20 in ' + str(trials) + ' trials')
 plt.xlabel('time of encounter in ticks')
-plt.xticks(np.arange(75, 280, step=5), rotation=45)
+first_graph_xticks = (np.arange(75, 620, step=25))
+first_graph.set(xticks=first_graph_xticks, xlim=(75, 600))
+first_graph.set_xticklabels(first_graph_xticks, rotation=45)
 second_axis = first_graph.twiny()
 sns.histplot(ax=second_axis, bins=80)
-second_axis.set(xticks=(np.arange(45, 170, step=5)), xlim=(45, 165))
+second_axis_xticks = (np.arange(45, 400, step=15))
+second_axis.set(xticks=second_axis_xticks, xlim=(45, 360), xlabel='time of encounter in minutes and seconds')
+second_axis.set_xticklabels(minutes_list_big_step[3:27], rotation=45)
 first_graph.grid('visible')
-one_anvil_list = tick_times
-one_anvil_list[:] = [x for x in one_anvil_list if x <= 150]
-
-get_c = trials / 1000
+if trials == 100000:
+    get_c = trials / 1000
+else:
+    get_c = trials / 500
 plt.subplot(3, 2, 6)
-second_new_list = pd.DataFrame(one_anvil_list[:])
-second_graph = sns.histplot(second_new_list, kde=True, bins=bin_number_second, color='darkblue')
-ymax_array, bin_edges = np.histogram(second_new_list, bins=bin_number_second, density=False)
+
+second_graph = sns.histplot(tick_times_one_anvil, kde=True, bins=bin_number_second, color='darkblue')
+ymax_array, bin_edges = np.histogram(tick_times_one_anvil, bins=bin_number_second, density=False)
 y_max = np.max(ymax_array)
 remainder = divmod(y_max, get_c)
 adjusted_ymax = remainder[0] + 1
 second_graph.set(yticks=(np.arange(0, (adjusted_ymax * (2 * get_c)), step=get_c)), ylim=(0, (adjusted_ymax * get_c)))
 second_graph.set(ylabel='number of one anvils')
-second_graph.set(xticks=(np.arange(45, 170, step=5)), xlim=(75, 160), xlabel='time of encounter in ticks')
+second_graph_xticks = (np.arange(45, 170, step=5))
+second_graph.set(xticks=second_graph_xticks, xlim=(75, 160), xlabel='time of encounter in ticks')
+second_graph.set_xticklabels(second_graph_xticks, rotation=45)
 second_graph.set_title('number of tektons under one anvil in ' + str(trials) + ' trials')
 aux_axis = second_graph.twiny()
 sns.histplot(ax=aux_axis, bins=80)
-aux_axis.set(xticks=(np.arange(45, 100, step=5)), xlim=(45, 96))
+aux_axis.set(xticks=(np.arange(45, 100, step=3)), xlim=(45, 96), xlabel='time of encounter in minutes and seconds')
+aux_axis.set_xticklabels(minutes_list[0:19], rotation=45)
 second_graph.legend(labels=('kde', (str((anvils[1] + anvils[0])) + ' total one anvils + no anvils')))
-plt.xlabel('time of encounter in seconds')
 second_graph.grid('visible')
 plt.subplots_adjust(wspace=.2)
 plt.subplots_adjust(hspace=0)
-plt.gcf().set_size_inches(18, 12)
+plt.gcf().set_size_inches(18, 13)
 plt.show()
+
+# to do list
+# either user input trials or buttons like 1k, 10k, 100k, 1m
+# checkbox redundancy
+# cfg saved defaults?
+# optimize backend code
+# make sure fang spec function works properly
+# maybe fix table box margin
+# maybe set default margins in a dataframe
+# adaptive step function based on
