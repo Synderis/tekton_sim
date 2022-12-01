@@ -8,6 +8,8 @@ import pandas as pd
 import seaborn as sns
 import scipy
 
+
+trials = 10000
 root = tk.Tk()
 root.title('Tekton Sim Version 1.0')
 root.geometry('500x200')
@@ -20,12 +22,50 @@ check_var5 = tk.BooleanVar()
 check_var6 = tk.BooleanVar()
 check_var7 = tk.BooleanVar()
 check_var8 = tk.BooleanVar()
+check_var9 = tk.BooleanVar()
 
 
 def abort():
     return exit(0)
 
 
+def trials_selection(amount):
+    global trials
+    trials = amount
+    return trials
+
+
+def check_correction():
+    if check_var5.get():
+        if check_var6.get():
+            return C6.toggle()
+        else:
+            return
+
+
+def spec_ring():
+    if check_var4.get():
+        return
+    else:
+        C9.deselect()
+
+
+def check_correction2():
+    if check_var6.get():
+        if check_var5.get():
+            return C5.toggle()
+        else:
+            return
+
+
+trials_text = tk.Label(root, text="select number of trials")
+trials_text.place(x=65, y=5)
+trials_button1 = tk.Button(root, text="1000", command=trials_selection(1000))
+trials_button1.place(x=60, y=25)
+trials_button2 = tk.Button(root, text="10000", command=trials_selection(10000))
+trials_button2.place(x=100, y=25)
+trials_button3 = tk.Button(root, text="100000", command=trials_selection(100000))
+trials_button3.place(x=145, y=25)
 exit_button = tk.Button(root, text="Exit", command=abort)
 exit_button.pack(pady=10, side=tk.TOP)
 button_submit = tk.Button(root, text="Submit", command=root.destroy)
@@ -39,10 +79,10 @@ C3.pack(side=tk.LEFT)
 C4 = tk.Checkbutton(root, text="fang", variable=check_var4, onvalue=1, offvalue=0)
 C4.pack(side=tk.LEFT)
 C4.pack()
-C5 = tk.Checkbutton(root, text="b ring", variable=check_var5, onvalue=1, offvalue=0)
+C5 = tk.Checkbutton(root, text="b ring", variable=check_var5, onvalue=1, offvalue=0, command=check_correction)
 C5.pack(side=tk.LEFT)
 C5.pack()
-C6 = tk.Checkbutton(root, text="brim", variable=check_var6, onvalue=1, offvalue=0)
+C6 = tk.Checkbutton(root, text="brim", variable=check_var6, onvalue=1, offvalue=0, command=check_correction2)
 C6.pack(side=tk.LEFT)
 C6.pack()
 C7 = tk.Checkbutton(root, text="feros", variable=check_var7, onvalue=1, offvalue=0)
@@ -51,6 +91,9 @@ C7.pack()
 C8 = tk.Checkbutton(root, text="tort", variable=check_var8, onvalue=1, offvalue=0)
 C8.pack(side=tk.LEFT)
 C8.pack()
+C9 = tk.Checkbutton(root, text="lightbearer", variable=check_var9, onvalue=1, offvalue=0, command=spec_ring)
+C9.pack(side=tk.LEFT)
+C9.pack()
 
 root.mainloop()
 
@@ -103,12 +146,14 @@ stab = 'stab'
 
 
 class Test:
-    def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time):
+    def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status, specced_last_anvil):
         self.four_tick_hit_counter = four_tick_hit_counter
         self.five_tick_hit_counter = five_tick_hit_counter
         self.time_parameter = time_parameter
         self.phase = phase
         self.idle_time = idle_time
+        self.fang_spec_status = fang_spec_status
+        self.specced_last_anvil = specced_last_anvil
 
 
 class Weapon:
@@ -264,9 +309,9 @@ def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
             damage_selection = random.randint(0, max_hit)
         elif five_tick:
             if fang:
-                max_hit = ((0.5 + effective_strength_lvl * ((strength_selector() + 64) / 640)) * .85)
+                max_hit = int(((0.5 + effective_strength_lvl * ((strength_selector() + 64) / 640)) * max_hit_modifier))
                 min_hit = int((0.5 + effective_strength_lvl * ((strength_selector() + 64) / 640)) * .15)
-                damage_selection = random.randint(min_hit, int(max_hit / max_hit_modifier))
+                damage_selection = random.randint(min_hit, max_hit)
             else:
                 damage_selection = random.randint(0, int(max_hit * max_hit_modifier))
     return int(damage_selection)
@@ -315,7 +360,7 @@ def defence_roll():
     return first_roll
 
 
-def hit_chancer(spec, four_tick, five_tick):
+def hit_chancer(spec, four_tick, five_tick, fang_spec_hit):
     attack_roll_check = 0
     def_roll_check = defence_roll()
     if spec:
@@ -324,8 +369,12 @@ def hit_chancer(spec, four_tick, five_tick):
         attack_roll_check = attack_roll(False, True, False, multiplier=1.0)
     elif five_tick:
         if fang:
-            attack_roll_check = attack_roll(False, False, True, multiplier=1.0)
-            attack_roll_check2 = attack_roll(False, False, True, multiplier=1.0)
+            if fang_spec_hit:
+                attack_roll_check = attack_roll(False, False, True, multiplier=1.5)
+                attack_roll_check2 = attack_roll(False, False, True, multiplier=1.5)
+            else:
+                attack_roll_check = attack_roll(False, False, True, multiplier=1.0)
+                attack_roll_check2 = attack_roll(False, False, True, multiplier=1.0)
             roll_list = [attack_roll_check, attack_roll_check2]
             if any(i > def_roll_check for i in roll_list):
                 return True
@@ -380,7 +429,7 @@ def spec_hit(instances, status):
         global one_hammer, two_hammer, no_hammer_total, one_hammer_total, two_hammer_total
         npc_style_checker(True, False)
         enraged_check(status)
-        if hit_chancer(True, False, False):
+        if hit_chancer(True, False, False, False):
             damage_val = hit_value_roll(spec_bonus=True, four_tick=False, five_tick=False)
             tekton.lower_hp(damage_val)
             if damage_val > 0:
@@ -422,7 +471,7 @@ def four_tick_hit(instances, status):
             hit_metrics.four_tick_hit_counter += 0
         enraged_check(status)
         npc_style_checker(True, False)
-        if hit_chancer(False, True, False):
+        if hit_chancer(False, True, False, False):
             damage_val = hit_value_roll(spec_bonus=False, four_tick=True, five_tick=False)
             tekton.lower_hp(damage_val)
         else:
@@ -436,15 +485,15 @@ def fang_spec(instances, status):
         enraged_check(status)
         if fang:
             npc_style_checker(False, True)
-            if hit_chancer(False, False, True):
-                damage_val = hit_value_roll(spec_bonus=False, four_tick=False, five_tick=True, max_hit_modifier=.85)
+            if hit_chancer(False, False, True, True):
+                damage_val = hit_value_roll(spec_bonus=False, four_tick=False, five_tick=True, max_hit_modifier=1)
                 tekton.lower_hp(damage_val)
             else:
                 tekton.lower_hp(0)
 
 
 def scy_dmg(step_down):
-    if hit_chancer(False, False, True):
+    if hit_chancer(False, False, True, False):
         damage_val = hit_value_roll(False, four_tick=False, five_tick=True, max_hit_modifier=step_down)
         tekton.lower_hp(damage_val)
     else:
@@ -462,8 +511,8 @@ def five_tick_hit(instances, status):
         else:
             hit_metrics.five_tick_hit_counter += 0
         if fang:
-            if hit_chancer(False, False, True):
-                damage_val = hit_value_roll(spec_bonus=False, four_tick=False, five_tick=True)
+            if hit_chancer(False, False, True, False):
+                damage_val = hit_value_roll(spec_bonus=False, four_tick=False, five_tick=True, max_hit_modifier=.85)
                 tekton.lower_hp(damage_val)
             else:
                 damage_val = 0
@@ -473,7 +522,7 @@ def five_tick_hit(instances, status):
             scy_dmg(.5)
             scy_dmg(.25)
         else:
-            if hit_chancer(False, False, True):
+            if hit_chancer(False, False, True, False):
                 damage_val = hit_value_roll(False, four_tick=False, five_tick=True)
                 tekton.lower_hp(damage_val)
             else:
@@ -535,13 +584,34 @@ def pre_anvil():
     return
 
 
-def post_anvil(fang_lb_spec):
+def can_i_spec():
+    if lightbearer_equipped:
+        hit_metrics.fang_spec_status = True
+        return hit_metrics.fang_spec_status
+    else:
+        if hit_metrics.specced_last_anvil:
+            hit_metrics.fang_spec_status = False
+            return hit_metrics.fang_spec_status
+        else:
+            hit_metrics.fang_spec_status = True
+            return hit_metrics.fang_spec_status
+
+
+def post_anvil(fang_lb_spec, spec_alternation):
     hit_metrics.phase += 1
     if four_and_five:
         four_tick_hit(5, True)
         if fang_lb_spec:
-            fang_spec(1, False)
-            four_tick_hit(6, False)
+            if spec_alternation:
+                fang_spec(1, False)
+                four_tick_hit(6, False)
+                hit_metrics.specced_last_anvil = True
+                can_i_spec()
+            else:
+                five_tick_hit(1, False)
+                four_tick_hit(6, False)
+                hit_metrics.specced_last_anvil = False
+                can_i_spec()
         else:
             four_tick_hit(6, False)
             five_tick_hit(1, False)
@@ -549,7 +619,18 @@ def post_anvil(fang_lb_spec):
         five_tick_hit(1, False)
     else:
         five_tick_hit(4, True)
-        five_tick_hit(8, False)
+        if fang_lb_spec:
+            if spec_alternation:
+                fang_spec(1, False)
+                five_tick_hit(7, False)
+                hit_metrics.specced_last_anvil = True
+                can_i_spec()
+            else:
+                five_tick_hit(8, False)
+                hit_metrics.specced_last_anvil = False
+                can_i_spec()
+        else:
+            five_tick_hit(8, False)
     return
 
 
@@ -582,10 +663,8 @@ def npc_style_checker(spec_or_four_tick, five_tick):
     return max_def_roll
 
 
-trials = 10000
-
 for x in range(trials):
-    hit_metrics = Test(0, 0, time_parameter=0.0, phase='', idle_time=0)
+    hit_metrics = Test(0, 0, time_parameter=0.0, phase='', idle_time=0, fang_spec_status=True, specced_last_anvil=False)
     if cm:
         tekton = NPC(450, 246, 155, 165, 105, 65, alive_status=True, anvil_checked=False)
         base_hp = 450
@@ -605,14 +684,14 @@ for x in range(trials):
         pre_anvil()
         anvil_adjustment(True)
         min_regen()
-        post_anvil(fang_lb_spec=lightbearer_equipped)
+        post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
         min_regen()
         one_hammer = 0
         two_hammer = 0
         while True:
             if tekton.hp > 0:
-                post_anvil(fang_lb_spec=False)
+                post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
                 anvil_adjustment(False)
                 min_regen()
                 continue
@@ -628,13 +707,13 @@ for x in range(trials):
         pre_anvil()
         anvil_adjustment(True)
         min_regen()
-        post_anvil(fang_lb_spec=lightbearer_equipped)
+        post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
         one_hammer = 0
         two_hammer = 0
         while True:
             if tekton.hp > 0:
-                post_anvil(fang_lb_spec=False)
+                post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
                 anvil_adjustment(False)
                 min_regen()
                 continue
