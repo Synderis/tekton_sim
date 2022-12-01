@@ -843,15 +843,15 @@ else:
 xd = []
 for each in np.arange(45, 170, step=5):
     xd.append(str(each))
-get_c_again = int(trials / tick_mod)
+step_increment = int(trials / tick_mod)
 plt.subplot(3, 2, 5)
 first_graph = sns.histplot(tick_times, kde=True, bins=bin_number, color='darkblue', legend=False)
 ymax_array1, bin_edges1 = np.histogram(tick_times, bins=bin_number, density=False)
 y_max1 = np.max(ymax_array1)
-remainder1 = divmod(y_max1, get_c_again)
+remainder1 = divmod(y_max1, step_increment)
 adjusted_ymax1 = remainder1[0] + 1
-first_graph.set(yticks=(np.arange(0, (adjusted_ymax1 * (2 * get_c_again)), step=get_c_again)),
-                ylim=(0, (adjusted_ymax1 * get_c_again)))
+first_graph.set(yticks=(np.arange(0, (adjusted_ymax1 * (2 * step_increment)), step=step_increment)),
+                ylim=(0, (adjusted_ymax1 * step_increment)))
 first_graph.set(ylabel='number of killed tektons in sample')
 first_graph.set_title('tekton density histogram of ' + str(trials) + ' trials')
 plt.xlabel('time of encounter in ticks')
@@ -865,17 +865,17 @@ second_axis.set(xticks=second_axis_xticks, xlim=(45, 360), xlabel='time of encou
 second_axis.set_xticklabels(minutes_list_big_step[3:27], rotation=45)
 first_graph.grid('visible')
 if trials == 100000:
-    get_c = trials / 1000
+    step_increment_second = trials / 1000
 else:
-    get_c = trials / 500
+    step_increment_second = trials / 500
 plt.subplot(3, 2, 6)
 
 second_graph = sns.histplot(tick_times_one_anvil, kde=True, bins=bin_number_second, color='darkblue')
 ymax_array, bin_edges = np.histogram(tick_times_one_anvil, bins=bin_number_second, density=False)
 y_max = np.max(ymax_array)
-remainder = divmod(y_max, get_c)
+remainder = divmod(y_max, step_increment_second)
 adjusted_ymax = remainder[0] + 1
-second_graph.set(yticks=(np.arange(0, (adjusted_ymax * (2 * get_c)), step=get_c)), ylim=(0, (adjusted_ymax * get_c)))
+second_graph.set(yticks=(np.arange(0, (adjusted_ymax * (2 * step_increment_second)), step=step_increment_second)), ylim=(0, (adjusted_ymax * step_increment_second)))
 second_graph.set(ylabel='number of one anvils')
 second_graph_xticks = (np.arange(45, 170, step=5))
 second_graph.set(xticks=second_graph_xticks, xlim=(75, 160), xlabel='time of encounter in ticks')
