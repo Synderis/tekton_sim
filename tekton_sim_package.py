@@ -7,11 +7,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import scipy
+import sys
 
 trials = 10000
 root = tk.Tk()
 root.title('Tekton Sim Version 1.2')
-root.geometry('250x205')
+root.geometry('280x205')
 
 check_var1 = tk.BooleanVar()
 check_var2 = tk.BooleanVar()
@@ -23,12 +24,14 @@ check_var7 = tk.BooleanVar()
 check_var8 = tk.BooleanVar()
 check_var9 = tk.BooleanVar()
 check_var10 = tk.BooleanVar()
+check_var11 = tk.BooleanVar()
 check_var12 = tk.BooleanVar()
 check_var13 = tk.BooleanVar()
+check_var14 = tk.BooleanVar()
 
 
 def abort():
-    return exit(0)
+    return sys.exit(0)
 
 
 def trials_selection():
@@ -113,7 +116,7 @@ C3 = tk.Checkbutton(root, text="inq", variable=check_var3, onvalue=1, offvalue=0
 C3.place(x=75, y=50)
 C3.toggle()
 C4 = tk.Checkbutton(root, text="fang", variable=check_var4, onvalue=1, offvalue=0)
-C4.place(x=120, y=50)
+C4.place(x=130, y=150)
 C5 = tk.Checkbutton(root, text="b ring", variable=check_var5, onvalue=1, offvalue=0, command=check_correction)
 C5.place(x=75, y=125)
 C6 = tk.Checkbutton(root, text="brim", variable=check_var6, onvalue=1, offvalue=0, command=check_correction2)
@@ -122,26 +125,33 @@ C7 = tk.Checkbutton(root, text="feros", variable=check_var7, onvalue=1, offvalue
 C7.place(x=25, y=150)
 C8 = tk.Checkbutton(root, text="tort", variable=check_var8, onvalue=1, offvalue=0)
 C8.place(x=75, y=150)
+C11 = tk.Checkbutton(root, text="pre veng", variable=check_var11, onvalue=1, offvalue=0)
+C11.place(x=120, y=50)
+C11.toggle()
 C9 = tk.Checkbutton(root, text="lightbearer", variable=check_var9, onvalue=1, offvalue=0, command=spec_ring)
-C9.place(x=130, y=125)
+C9.place(x=140, y=125)
 C10 = tk.Checkbutton(root, text="1000", variable=check_var10, onvalue=1, offvalue=0, command=check_correction_temp1)
 C10.place(x=25, y=25)
 C12 = tk.Checkbutton(root, text="10000", variable=check_var12, onvalue=1, offvalue=0, command=check_correction_temp2)
-C12.place(x=75, y=25)
+C12.place(x=85, y=25)
 trials_selection()
 C12.toggle()
 C13 = tk.Checkbutton(root, text="100000", variable=check_var13, onvalue=1, offvalue=0, command=check_correction_temp3)
-C13.place(x=130, y=25)
+C13.place(x=150, y=25)
+C14 = tk.Checkbutton(root, text="vuln", variable=check_var14, onvalue=1, offvalue=0)
+C14.place(x=150, y=75)
+C14.toggle()
 
 trials_text = tk.Label(root, textvariable=string_variable)
 trials_text.place(x=30, y=5)
 notif_text = tk.Label(root, text='lb is for fang spec only')
 notif_text.place(x=30, y=105)
 exit_button = tk.Button(root, text="Exit", command=abort)
-exit_button.place(x=210, y=5)
+exit_button.place(x=230, y=5)
 button_submit = tk.Button(root, text="Submit", command=root.destroy)
 button_submit.place(x=100, y=180)
 root.mainloop()
+
 result_array = ["hit", "miss"]
 global max_def_roll
 inq = check_var3.get()
@@ -152,6 +162,7 @@ if fang:
     scythe = False
 else:
     scythe = True
+lightbearer_equipped = check_var9.get()
 print('inq:', inq)
 print('cm:', cm)
 print('fang:', fang)
@@ -160,6 +171,7 @@ print('b ring:', check_var5.get())
 print('brim ring:', check_var6.get())
 print('tort:', check_var8.get())
 print('feros:', check_var7.get())
+print('lightbearer', lightbearer_equipped)
 if five_only:
     four_and_five = False
 else:
@@ -177,20 +189,19 @@ one_h_one_a = 0
 two_h_one_a = 0
 one_hammer = 0
 two_hammer = 0
-anvils = [0] * 100
+anvils = [0] * 30
 times = []
 tick_times = []
 tick_times_one_anvil = []
 no_hammer_total = 0
 one_hammer_total = 0
 two_hammer_total = 0
-lightbearer_equipped = False
 crush = 'crush'
 slash = 'slash'
 stab = 'stab'
 
 
-class Test:
+class Offensive:
     def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status,
                  specced_last_anvil):
         self.four_tick_hit_counter = four_tick_hit_counter
@@ -219,8 +230,7 @@ else:
 
 class Gear:
     def __init__(self, dwh_att_bonus, dwh_str_bonus, four_tick_att_bonus, four_tick_str_bonus, fang_att_bonus,
-                 fang_str_bonus, scy_att_bonus, scy_str_bonus, gear_multiplier, lightbearer):
-        self.lightbearer = lightbearer
+                 fang_str_bonus, scy_att_bonus, scy_str_bonus, gear_multiplier):
         self.dwh_att_bonus = dwh_att_bonus
         self.dwh_str_bonus = dwh_str_bonus
         self.four_tick_att_bonus = four_tick_att_bonus
@@ -230,12 +240,6 @@ class Gear:
         self.scy_att_bonus = scy_att_bonus
         self.scy_str_bonus = scy_str_bonus
         self.gear_multiplier = gear_multiplier
-
-
-if lightbearer_equipped:
-    pass
-else:
-    pass
 
 
 def gear_selection():
@@ -282,25 +286,23 @@ def loadout_adjuster(att_modifier, str_modifier):
 
 if inq:
     loadout = Gear(dwh_att_bonus=183, dwh_str_bonus=136, four_tick_att_bonus=183, four_tick_str_bonus=140,
-                   fang_att_bonus=155, fang_str_bonus=154, scy_att_bonus=90, scy_str_bonus=118, gear_multiplier=1.025,
-                   lightbearer=.85)
+                   fang_att_bonus=155, fang_str_bonus=154, scy_att_bonus=90, scy_str_bonus=118, gear_multiplier=1.025)
     gear_selection()
     gear_selection_two()
     gear_selection_three()
     print('loadout bonuses selected: ', loadout.dwh_att_bonus, loadout.dwh_str_bonus, loadout.four_tick_att_bonus,
           loadout.four_tick_str_bonus, loadout.fang_att_bonus, loadout.fang_str_bonus, loadout.scy_att_bonus,
-          loadout.scy_str_bonus, loadout.gear_multiplier, loadout.lightbearer)
+          loadout.scy_str_bonus, loadout.gear_multiplier)
     print('----------')
 else:
     loadout = Gear(dwh_att_bonus=151, dwh_str_bonus=144, four_tick_att_bonus=151, four_tick_str_bonus=148,
-                   fang_att_bonus=163, fang_str_bonus=162, scy_att_bonus=138, scy_str_bonus=126, gear_multiplier=1,
-                   lightbearer=.85)
+                   fang_att_bonus=163, fang_str_bonus=162, scy_att_bonus=138, scy_str_bonus=126, gear_multiplier=1)
     gear_selection()
     gear_selection_two()
     gear_selection_three()
     print('loadout bonuses selected: ', loadout.dwh_att_bonus, loadout.dwh_str_bonus, loadout.four_tick_att_bonus,
           loadout.four_tick_str_bonus, loadout.fang_att_bonus, loadout.fang_str_bonus, loadout.scy_att_bonus,
-          loadout.scy_str_bonus, loadout.gear_multiplier, loadout.lightbearer)
+          loadout.scy_str_bonus, loadout.gear_multiplier)
     print('----------')
 
 
@@ -435,13 +437,16 @@ def hit_chancer(spec, four_tick, five_tick, fang_spec_hit):
 
 
 def vuln_check():
-    vuln = np.random.choice(result_array, 1, replace=True, p=[.62, (1 - .62)])
-    if vuln:
-        tekton.lower_def(int(tekton.defence * .10))
-        adjust_def_integer()
+    if check_var14.get():
+        vuln = np.random.choice(result_array, 1, replace=True, p=[.62, (1 - .62)])
+        if vuln:
+            tekton.lower_def(int(tekton.defence * .10))
+            adjust_def_integer()
+        else:
+            tekton.lower_def(0)
+        return
     else:
-        tekton.lower_def(0)
-    return
+        return
 
 
 def tek_check():
@@ -650,14 +655,13 @@ def post_anvil(fang_lb_spec, spec_alternation):
         if fang_lb_spec:
             if spec_alternation:
                 fang_spec(1, False)
-                four_tick_hit(6, False)
                 hit_metrics.specced_last_anvil = True
                 can_i_spec()
             else:
                 five_tick_hit(1, False)
-                four_tick_hit(6, False)
                 hit_metrics.specced_last_anvil = False
                 can_i_spec()
+            four_tick_hit(6, False)
         else:
             four_tick_hit(6, False)
             five_tick_hit(1, False)
@@ -668,13 +672,13 @@ def post_anvil(fang_lb_spec, spec_alternation):
         if fang_lb_spec:
             if spec_alternation:
                 fang_spec(1, False)
-                five_tick_hit(7, False)
                 hit_metrics.specced_last_anvil = True
                 can_i_spec()
             else:
-                five_tick_hit(8, False)
+                five_tick_hit(1, False)
                 hit_metrics.specced_last_anvil = False
                 can_i_spec()
+            five_tick_hit(7, False)
         else:
             five_tick_hit(8, False)
     return
@@ -710,7 +714,7 @@ def npc_style_checker(spec_or_four_tick, five_tick):
 
 
 for x in range(trials):
-    hit_metrics = Test(0, 0, time_parameter=0.0, phase='', idle_time=0, fang_spec_status=True, specced_last_anvil=False)
+    hit_metrics = Offensive(0, 0, time_parameter=0.0, phase='', idle_time=0, fang_spec_status=True, specced_last_anvil=False)
     if cm:
         tekton = NPC(450, 246, 155, 165, 105, 65, alive_status=True, anvil_checked=False)
         base_hp = 450
@@ -728,7 +732,7 @@ for x in range(trials):
         hit_metrics.five_tick_hit_counter = 0
         vuln_check()
         pre_anvil()
-        anvil_adjustment(True)
+        anvil_adjustment(check_var11.get())
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
@@ -751,7 +755,7 @@ for x in range(trials):
         hit_metrics.five_tick_hit_counter = 0
         vuln_check()
         pre_anvil()
-        anvil_adjustment(True)
+        anvil_adjustment(check_var11.get())
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
@@ -939,12 +943,38 @@ plt.subplots_adjust(hspace=0)
 plt.gcf().set_size_inches(18, 13)
 plt.show()
 
-# to do list
-# either user input trials or buttons like 1k, 10k, 100k, 1m
-# checkbox redundancy
-# cfg saved defaults?
-# optimize backend code
-# make sure fang spec function works properly
-# maybe fix table box margin
-# maybe set default margins in a dataframe
-# adaptive step function based on
+#to do list
+#either user input trials or buttons like 1k, 10k, 100k, 1m
+#cfg saved defaults?
+#fucking leave some comments on the code you degenerate fuck
+#optimize backend code
+#maybe fix table box margin
+#maybe set default margins in a dataframe
+#adaptive step function based on
+
+#combine these three functions into npc_style_checker all you need is for the max def roll to pop out they look bloated
+#enraged_check(status)
+#def defence_roll():
+#first_roll = math.ceil(random.randint(0, max_def_roll))
+#return first_roll
+#npc_style_checker(False, True)
+
+#can probably just tack this one onto post anvil adjustment
+#def min_regen():
+
+#maybe put this into 5tick hit if you can find a clean way of doing so
+#def fang_spec(instances, status):
+
+#this could probably be merged with the gear class
+#class Weapon:
+
+#this is probably a horrible idea that ill regret but could possibly store the booleanvars from buttons into a list would be a lot cleaner
+
+#maybe hitmetrics spec counter parameter could clean this up
+#def spec_hit(instances, status):
+
+#this whole block is kinda a fucking nightmare thanks to fang but uh idk at least the function within the function was clever in a kinda suspic way
+#def attack_roll(spec_attack, four_tick, five_tick, multiplier):
+
+#is also bloated but weve tried this before to little success
+#def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
