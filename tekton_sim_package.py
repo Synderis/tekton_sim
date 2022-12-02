@@ -8,11 +8,10 @@ import pandas as pd
 import seaborn as sns
 import scipy
 
-
 trials = 10000
 root = tk.Tk()
-root.title('Tekton Sim Version 1.0')
-root.geometry('500x200')
+root.title('Tekton Sim Version 1.2')
+root.geometry('250x205')
 
 check_var1 = tk.BooleanVar()
 check_var2 = tk.BooleanVar()
@@ -23,16 +22,46 @@ check_var6 = tk.BooleanVar()
 check_var7 = tk.BooleanVar()
 check_var8 = tk.BooleanVar()
 check_var9 = tk.BooleanVar()
+check_var10 = tk.BooleanVar()
+check_var12 = tk.BooleanVar()
+check_var13 = tk.BooleanVar()
 
 
 def abort():
     return exit(0)
 
 
-def trials_selection(amount):
+def trials_selection():
     global trials
-    trials = amount
+    if check_var10.get():
+        trials = 1000
+        string_variable.set('number of trials ' + str(trials))
+        print(trials, '1')
+    elif check_var12.get():
+        trials = 10000
+        string_variable.set('number of trials ' + str(trials))
+        print(trials, '2')
+    elif check_var13.get():
+        trials = 100000
+        string_variable.set('number of trials ' + str(trials))
+        print(trials, '3')
+    else:
+        trials = 10000
+        string_variable.set('number of trials ' + str(trials))
+        print(trials, '4')
     return trials
+
+
+def check_correction_temp1():
+    return check_correction_new('1')
+
+
+def check_correction_temp2():
+    return check_correction_new('2')
+
+
+def check_correction_temp3():
+    return check_correction_new('3')
 
 
 def check_correction():
@@ -41,6 +70,26 @@ def check_correction():
             return C6.toggle()
         else:
             return
+
+
+def fang_checker_lb():
+    while not check_var4.get():
+        return C9.toggle()
+
+
+def check_correction_new(num):
+    while num == '1':
+        C12.deselect()
+        C13.deselect()
+        return trials_selection()
+    while num == '2':
+        C10.deselect()
+        C13.deselect()
+        return trials_selection()
+    while num == '3':
+        C12.deselect()
+        C10.deselect()
+        return trials_selection()
 
 
 def spec_ring():
@@ -58,45 +107,45 @@ def check_correction2():
             return
 
 
-trials_text = tk.Label(root, text="select number of trials")
-trials_text.place(x=65, y=5)
-trials_button1 = tk.Button(root, text="1000", command=trials_selection(1000))
-trials_button1.place(x=60, y=25)
-trials_button2 = tk.Button(root, text="10000", command=trials_selection(10000))
-trials_button2.place(x=100, y=25)
-trials_button3 = tk.Button(root, text="100000", command=trials_selection(100000))
-trials_button3.place(x=145, y=25)
-exit_button = tk.Button(root, text="Exit", command=abort)
-exit_button.pack(pady=10, side=tk.TOP)
-button_submit = tk.Button(root, text="Submit", command=root.destroy)
-button_submit.pack(side=tk.BOTTOM)
+string_variable = tk.StringVar()
 C1 = tk.Checkbutton(root, text="five tick only", variable=check_var1, onvalue=1, offvalue=0)
-C1.pack(side=tk.LEFT)
+C1.place(x=25, y=75)
 C2 = tk.Checkbutton(root, text="CM", variable=check_var2, onvalue=1, offvalue=0)
-C2.pack(side=tk.LEFT)
+C2.place(x=25, y=50)
+C2.toggle()
 C3 = tk.Checkbutton(root, text="inq", variable=check_var3, onvalue=1, offvalue=0)
-C3.pack(side=tk.LEFT)
+C3.place(x=75, y=50)
+C3.toggle()
 C4 = tk.Checkbutton(root, text="fang", variable=check_var4, onvalue=1, offvalue=0)
-C4.pack(side=tk.LEFT)
-C4.pack()
+C4.place(x=120, y=50)
 C5 = tk.Checkbutton(root, text="b ring", variable=check_var5, onvalue=1, offvalue=0, command=check_correction)
-C5.pack(side=tk.LEFT)
-C5.pack()
+C5.place(x=75, y=125)
 C6 = tk.Checkbutton(root, text="brim", variable=check_var6, onvalue=1, offvalue=0, command=check_correction2)
-C6.pack(side=tk.LEFT)
-C6.pack()
+C6.place(x=25, y=125)
 C7 = tk.Checkbutton(root, text="feros", variable=check_var7, onvalue=1, offvalue=0)
-C7.pack(side=tk.LEFT)
-C7.pack()
+C7.place(x=25, y=150)
 C8 = tk.Checkbutton(root, text="tort", variable=check_var8, onvalue=1, offvalue=0)
-C8.pack(side=tk.LEFT)
-C8.pack()
+C8.place(x=75, y=150)
 C9 = tk.Checkbutton(root, text="lightbearer", variable=check_var9, onvalue=1, offvalue=0, command=spec_ring)
-C9.pack(side=tk.LEFT)
-C9.pack()
+C9.place(x=130, y=125)
+C10 = tk.Checkbutton(root, text="1000", variable=check_var10, onvalue=1, offvalue=0, command=check_correction_temp1)
+C10.place(x=25, y=25)
+C12 = tk.Checkbutton(root, text="10000", variable=check_var12, onvalue=1, offvalue=0, command=check_correction_temp2)
+C12.place(x=75, y=25)
+trials_selection()
+C12.toggle()
+C13 = tk.Checkbutton(root, text="100000", variable=check_var13, onvalue=1, offvalue=0, command=check_correction_temp3)
+C13.place(x=130, y=25)
 
+trials_text = tk.Label(root, textvariable=string_variable)
+trials_text.place(x=30, y=5)
+notif_text = tk.Label(root, text='lb is for fang spec only')
+notif_text.place(x=30, y=105)
+exit_button = tk.Button(root, text="Exit", command=abort)
+exit_button.place(x=210, y=5)
+button_submit = tk.Button(root, text="Submit", command=root.destroy)
+button_submit.place(x=100, y=180)
 root.mainloop()
-
 result_array = ["hit", "miss"]
 global max_def_roll
 inq = check_var3.get()
@@ -146,7 +195,8 @@ stab = 'stab'
 
 
 class Test:
-    def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status, specced_last_anvil):
+    def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status,
+                 specced_last_anvil):
         self.four_tick_hit_counter = four_tick_hit_counter
         self.five_tick_hit_counter = five_tick_hit_counter
         self.time_parameter = time_parameter
@@ -875,7 +925,8 @@ ymax_array, bin_edges = np.histogram(tick_times_one_anvil, bins=bin_number_secon
 y_max = np.max(ymax_array)
 remainder = divmod(y_max, step_increment_second)
 adjusted_ymax = remainder[0] + 1
-second_graph.set(yticks=(np.arange(0, (adjusted_ymax * (2 * step_increment_second)), step=step_increment_second)), ylim=(0, (adjusted_ymax * step_increment_second)))
+second_graph.set(yticks=(np.arange(0, (adjusted_ymax * (2 * step_increment_second)), step=step_increment_second)),
+                 ylim=(0, (adjusted_ymax * step_increment_second)))
 second_graph.set(ylabel='number of one anvils')
 second_graph_xticks = (np.arange(45, 170, step=5))
 second_graph.set(xticks=second_graph_xticks, xlim=(75, 160), xlabel='time of encounter in ticks')
