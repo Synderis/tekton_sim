@@ -36,19 +36,15 @@ def trials_selection():
     if check_var10.get():
         trials = 1000
         string_variable.set('number of trials ' + str(trials))
-        print(trials, '1')
     elif check_var12.get():
         trials = 10000
         string_variable.set('number of trials ' + str(trials))
-        print(trials, '2')
     elif check_var13.get():
         trials = 100000
         string_variable.set('number of trials ' + str(trials))
-        print(trials, '3')
     else:
         trials = 10000
         string_variable.set('number of trials ' + str(trials))
-        print(trials, '4')
     return trials
 
 
