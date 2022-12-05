@@ -1,4 +1,5 @@
 from datetime import datetime
+
 selection_time = datetime.now()
 from multiprocessing import Process, Pipe
 import math
@@ -12,6 +13,7 @@ import pandas as pd
 import seaborn as sns
 import scipy.stats as stats
 import sys
+import os
 
 
 def f(child_conn):
@@ -829,6 +831,12 @@ def plot_adjustment():
     # plt.subplots_adjust(wspace=.2, hspace=0)
 
 
+plt.rcParams.update(
+    {"lines.color": "silver", "patch.edgecolor": "black", "text.color": "black", "axes.facecolor": "silver",
+     "axes.edgecolor": "black", "axes.labelcolor": "black", "xtick.color": "black", "ytick.color": "black",
+     "grid.color": "silver", "figure.facecolor": "dimgray", "figure.edgecolor": "dimgray", "axes.titlecolor": "black",
+     "savefig.facecolor": "black", "savefig.edgecolor": "black"})
+
 fig = plt.figure()
 gs = fig.add_gridspec(3, 2)
 ax1 = fig.add_subplot(gs[0, 0])
@@ -839,18 +847,20 @@ ax6t = fig.add_subplot(gs[0, 1])
 ax6 = fig.add_subplot(gs[0, 1])
 ax4t = fig.add_subplot(gs[2, 0])
 ax4 = fig.add_subplot(gs[2, 0])
-ax4t.xaxis.set_visible(False)
-ax4t.yaxis.set_visible(False)
-
-mpl_table = ax1.table(cellText=table_dataframe.values, rowLabels=table_dataframe.index,
-                      colLabels=table_dataframe.columns, cellLoc='center', rowLoc='center', loc='upper right')
+ax4t.axes.set_visible(False)
+xd = ['gray', 'gray', 'gray', 'gray']
+colors = [["silver", "silver", "silver", "silver"], ["silver", "silver", "silver", "silver"],
+          ["silver", "silver", "silver", "silver"], ["silver", "silver", "silver", "silver"]]
+mpl_table = ax1.table(cellText=table_dataframe.values,
+                      colLabels=table_dataframe.columns, cellLoc='center', rowLoc='center', loc='upper right',
+                      cellColours=colors, colColours=xd)
 mpl_table.auto_set_font_size(False)
 ax1.axis(False)
 mpl_table.set_fontsize(9)
 
-
-mpl_table2 = ax2.table(cellText=table_dataframe2.values, rowLabels=table_dataframe2.index,
-                       colLabels=table_dataframe2.columns, cellLoc='center', rowLoc='center', loc='upper right')
+mpl_table2 = ax2.table(cellText=table_dataframe2.values,
+                       colLabels=table_dataframe2.columns, cellLoc='center', rowLoc='center', loc='upper right',
+                       cellColours=colors[0:3], colColours=xd)
 mpl_table2.auto_set_font_size(False)
 mpl_table2.set_fontsize(9)
 ax2.axis(False)
@@ -869,60 +879,39 @@ second_q3 = float(np.quantile(m, .75))
 iqr_second = second_q3 - second_q1
 bin_width_second = (2 * iqr_second) / ((len(m)) ** (1. / 3.))
 bin_number_second = int(np.ceil((m.max() - m.min()) / bin_width_second))
-if trials == 1000:
-    tick_mod = 100
-elif trials == 10000:
-    tick_mod = 200
-else:
-    tick_mod = 400
 
-xd = []
-for each in np.arange(45, 170, step=5):
-    xd.append(str(each))
-step_increment = int(trials / tick_mod)
-
-if trials == 100000:
-    step_increment_second = trials / 1000
-else:
-    step_increment_second = trials / 500
 fourth_graph = sns.kdeplot(cum_cdf_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
-                           legend=True)
-fourth_empirical_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True)
+                           legend=True, color='crimson')
+fourth_empirical_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True, color='green')
 data_x, data_y = fourth_graph.lines[0].get_data()
 data_x2, data_y2 = fourth_empirical_graph.lines[0].get_data()
 yi = .99
 xi = np.interp(yi, data_y, data_x)
 yi2 = .99
 xi2 = np.interp(yi2, data_y2, data_x2)
-fourth_graph.set_title('cumulative probability of killing tekton')
-fourth_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi))
+fourth_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi), yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1),
+                 ylabel='probability of killing tekton', xlabel='time of encounter in ticks',
+                 title='cumulative probability of killing tekton')
 fourth_graph.set_xticklabels(fourth_graph.get_xticklabels(), rotation=45)
-fourth_graph.set(xlabel='time of encounter in ticks')
 aux_axis_fourth = fourth_graph.twiny()
 sns.kdeplot(ax=aux_axis_fourth, bins=80)
-fourth_graph.legend(labels=('theoretical', 'empirical'))
-fourth_graph.set(ylabel='probability of killing tekton')
-fourth_graph.set(yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1))
+fourth_graph.legend(labels=('theoretical', 'empirical'), labelcolor='black')
 aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)), xlabel='time of encounter in seconds')
 aux_axis_fourth.set_xticklabels(minutes_list_bigger_step, rotation=45)
-fourth_graph.grid('visible')
+fourth_graph.grid('visible', color='b')
 
-
-n2t, bins2t, pathces2t = ax5.hist(tick_times, bins=bin_number, density=False)
+# total histogram graph
+n2t, bins2t, pathces2t = ax5.hist(tick_times, bins=bin_number, density=False, alpha=0)
 n2, bins2, pathces2 = ax3.hist(tick_times, bins=bin_number, density=True, edgecolor='black', linewidth=.8)
-y_max2t = np.max(bins2t)
 
-remainder2t = divmod(y_max2t, step_increment)
-adjusted_ymax2t = remainder2t[0] + 1
-ax5.yaxis.tick_right()
-ax5.set(yticks=(np.arange(0, (y_max2t + step_increment), step=step_increment)), ylim=(0, (y_max2t + step_increment)))
+ax5.set(ylabel='number of killed tektons in sample')
 mu2 = np.mean(tick_times)
 sigma2 = statistics.stdev(tick_times)
-y2 = ((1 / (np.sqrt(2 * np.pi) * sigma2)) * np.exp(-0.5 * (1 / sigma2 * (bins2 - mu2))**2))
+y2 = ((1 / (np.sqrt(2 * np.pi) * sigma2)) * np.exp(-0.5 * (1 / sigma2 * (bins2 - mu2)) ** 2))
 ax3.plot(bins2, y2)
 ax3_xticks = (np.arange(75, (np.max(tick_times) + 25), step=25))
-ax3.set(xticks=ax3_xticks, xlim=(75, (np.max(tick_times))))
 ax3.xaxis.set_tick_params(rotation=45)
+ax5.yaxis.tick_right()
 ax3_aux_xaxis = ax3.secondary_xaxis('top')
 ax5.xaxis.set_visible(False)
 ax5.spines.top.set_visible(False)
@@ -930,72 +919,74 @@ ax3_aux_xaxis.xaxis.set_tick_params(rotation=45)
 ax3_aux_xaxis.set(xticks=(np.arange(75, (np.max(tick_times)), step=25)), xlim=(75, (np.max(tick_times))))
 ax3_aux_xaxis_labels = np.arange(75, (np.max(tick_times)), step=25)
 ax3_aux_xaxis.set_xticklabels(minutes_list_big_step[3:(len(ax3_aux_xaxis_labels) + 3)])
-ax3.set(yticks=(np.arange(0, (np.max(n2) + .001), step=.0005)), ylim=(0, (np.max(n2) + .0005)))
-set_ = []
-ax3.set_xlabel('time of encounter in ticks')
-ax5.set_ylabel('number of killed tektons in sample')
+ax3.set(ylabel='probability density', xlabel='time of encounter in ticks',
+        title='tekton density histogram of ' + p.number_to_words(trials) + ' trials', xticks=ax3_xticks,
+        xlim=(75, (np.max(tick_times))))
+ax3.locator_params(nbins=22, axis='y')
+ax5.locator_params(nbins=22, axis='y')
 ax5.yaxis.set_label_position('right')
-ax3.set_ylabel('probability density')
-ax3.set_title('tekton density histogram of ' + str(trials) + ' trials')
-ax3.xaxis.grid(True)
-ax3.yaxis.grid(True)
+ax3.xaxis.grid(True, color='b')
 ax3.set_axisbelow(True)
+ax5.yaxis.grid(True, color='b')
+ax3.set_facecolor((0.0, 0.0, 0.0, 0.0))
 
-
+# under one anvil graph
 n, bins, pathces = ax6.hist(tick_times_one_anvil, bins=bin_number_second, density=True, edgecolor='black', linewidth=.8)
-nt, binst, pathcest = ax6t.hist(tick_times_one_anvil, bins=bin_number_second, density=True, edgecolor='black', linewidth=.8)
-y_max = np.max(bins)
+nt, binst, pathcest = ax6t.hist(tick_times_one_anvil, bins=bin_number_second, density=False, edgecolor='black',
+                                linewidth=.8, alpha=0)
+
 ax6t.xaxis.set_visible(False)
-ax6t.set(yticks=(np.arange(0, (y_max + step_increment_second), step=step_increment_second)), ylim=(0, (y_max + step_increment_second)), ylabel='number of one anvils')
+ax6t.set(ylabel='number of one anvils')
 ax6t.yaxis.tick_right()
 ax6t.yaxis.set_label_position('right')
-ax6.set(yticks=(np.arange(0, (np.max(n) + .01), step=.005)), ylim=(0, (np.max(n) + .005)))
 mu = np.mean(tick_times_one_anvil)
 sigma = statistics.stdev(tick_times_one_anvil)
-y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
-     np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
+y = ((1 / (np.sqrt(2 * np.pi) * sigma)) * np.exp(-0.5 * (1 / sigma * (bins - mu)) ** 2))
 ax6.plot(bins, y)
-remainder = divmod(y_max, step_increment_second)
-adjusted_ymax = remainder[0] + 1
-ax6_xticks = (np.arange(75, 170, step=5))
-ax6.set(xticks=ax6_xticks, xlim=(75, 165))
+ax6_xticks = (np.arange(75, 165, step=5))
+ax6.set(xticks=ax6_xticks,
+        xlim=(75, 160), xlabel='time of encounter in ticks', ylabel='Probability density',
+        title='number of tektons under one anvil in ' + p.number_to_words(trials) + ' trials')
+ax6.locator_params(nbins=22, axis='y')
+ax6t.locator_params(nbins=22, axis='y')
 ax6.xaxis.set_tick_params(rotation=45)
 ax6_aux_xaxis = ax6.secondary_xaxis('top')
-ax6_aux_xaxis.set(xticks=(np.arange(75, 170, step=5)), xlim=(75, 165))
-ax6_aux_xaxis.set_xticklabels(minutes_list[:19])
+ax6t.spines.top.set_visible(False)
+ax6.spines.top.set_visible(False)
+ax6_aux_xaxis.set(xticks=(np.arange(75, 165, step=5)), xlim=(75, 160))
+ax6_aux_xaxis.set_xticklabels(minutes_list[:18])
 ax6_aux_xaxis.xaxis.set_tick_params(rotation=45)
-ax6.set_xlabel('time of encounter in ticks')
-ax6.set_ylabel('Probability density')
-ax6.set_title('number of tektons under one anvil in ' + str(trials) + ' trials')
-ax6.xaxis.grid(True)
-ax6.yaxis.grid(True)
+ax6.xaxis.grid(True, color='b')
 ax6.set_axisbelow(True)
-plt.subplots_adjust(wspace=.25, hspace=0, right=.93, left=0.05, top=.93, bottom=.07)
+
+ax6t.yaxis.grid(True, color='b')
+plt.subplots_adjust(wspace=.25, hspace=0, right=.93, left=0.05, top=.90, bottom=.07)
+print('script completed in', datetime.now() - (start_time - initialization_time), 'seconds')
+print(ax6t.yaxis.get_ticklocs())
+ax6.set_facecolor((0.0, 0.0, 0.0, 0.0))
+
 plt.show()
 
-
 # to do list
-# cfg saved defaults?
 # fucking leave some comments on the code you degenerate fuck
 # optimize backend code
 # maybe fix table box margin
 
-#can probably just tack this one onto post anvil adjustment
-#def min_regen():
-#honestly cba its fine
+# can probably just tack this one onto post anvil adjustment
+# def min_regen():
+# honestly cba its fine
 
-#dear god the graphs
-#idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
-#tried to fix it... somehow its worse now all for the fucking grid kms
+# dear god the graphs
+# idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
+# tried to fix it... somehow its worse now all for the fucking grid kms
 
-#this is probably a horrible idea that ill regret but could possibly store the booleanvars from buttons into a list would be a lot cleaner
-#ok yeah that was a pretty fucking bad idea
+# this is probably a horrible idea that ill regret but could possibly store the booleanvars from buttons into a list would be a lot cleaner
+# ok yeah that was a pretty fucking bad idea
 
-#this whole block is kinda a fucking nightmare thanks to fang but uh idk at least the function within the function was clever in a kinda suspic way
-#def attack_roll(spec_attack, four_tick, five_tick, multiplier):
+# this whole block is kinda a fucking nightmare thanks to fang but uh idk at least the function within the function was clever in a kinda suspic way
+# def attack_roll(spec_attack, four_tick, five_tick, multiplier):
 
 # is also bloated but weve tried this before to little success
 # def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
 
-#windows is a dogshit operating system
-
+# windows is a dogshit operating system
