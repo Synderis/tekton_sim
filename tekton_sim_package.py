@@ -1,6 +1,8 @@
 from datetime import datetime
 selection_time = datetime.now()
+from multiprocessing import Process, Pipe
 import math
+import statistics
 import random
 import tkinter as tk
 import inflect
@@ -8,8 +10,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import scipy
+import scipy.stats as stats
 import sys
+
+
+def f(child_conn):
+    data_1 = table_dataframe
+    # data_2 = table_dataframe2
+    child_conn.send(data_1)
+    child_conn.close()
 
 
 trials = 10000
@@ -33,6 +42,7 @@ check_var12 = tk.BooleanVar()
 check_var13 = tk.BooleanVar()
 check_var14 = tk.BooleanVar()
 check_var15 = tk.BooleanVar()
+check_var16 = tk.BooleanVar()
 
 
 def abort():
@@ -163,6 +173,8 @@ C15.place(x=225, y=30)
 C14 = tk.Checkbutton(root, text="vuln", variable=check_var14, onvalue=1, offvalue=0)
 C14.place(x=150, y=80)
 C14.toggle()
+C16 = tk.Checkbutton(root, text="vuln book", variable=check_var16, onvalue=1, offvalue=0)
+C16.place(x=190, y=55)
 
 trials_text = tk.Label(root, textvariable=string_variable)
 trials_text.place(x=30, y=10)
@@ -212,8 +224,6 @@ two_h_one_anvil_temp = 0
 no_h_one_a = 0
 one_h_one_a = 0
 two_h_one_a = 0
-one_hammer = 0
-two_hammer = 0
 anvils = [0] * 30
 times = []
 tick_times = []
@@ -443,8 +453,12 @@ def hit_chancer(spec, four_tick, five_tick, fang_spec_hit, status):
 def vuln_check():
     if check_var14.get():
         vuln = np.random.choice(result_array, 1, replace=True, p=[.62, (1 - .62)])
+        if check_var16.get():
+            book_of_water = .15
+        else:
+            book_of_water = .10
         if vuln:
-            tekton.lower_def(int(tekton.defence * .10))
+            tekton.lower_def(int(tekton.defence * book_of_water))
             adjust_def_integer()
         else:
             tekton.lower_def(0)
@@ -454,7 +468,7 @@ def vuln_check():
 
 
 def tek_check():
-    global one_hammer, two_hammer, no_h_one_a, one_h_one_a, two_h_one_a, no_hammer_total, one_hammer_total, two_hammer_total
+    global no_h_one_a, one_h_one_a, two_h_one_a, no_hammer_total, one_hammer_total, two_hammer_total
     if not tekton.alive_status:
         if not tekton.anvil_checked:
             if hit_metrics.phase == 0:
@@ -728,8 +742,6 @@ for x in range(trials):
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
         min_regen()
-        one_hammer = 0
-        two_hammer = 0
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
@@ -752,8 +764,6 @@ for x in range(trials):
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
-        one_hammer = 0
-        two_hammer = 0
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
@@ -767,14 +777,12 @@ for x in range(trials):
 p = inflect.engine()
 
 tick_times_raw = tick_times
-hist, bin_edges = np.histogram(tick_times, density=True)
-cum_cdf = np.cumsum(hist * np.diff(bin_edges))
 hist2, bin_edges2 = np.histogram(tick_times_raw, density=True)
 cum_cdf_raw = np.cumsum(hist2 * np.diff(bin_edges2))
 sub_115 = []
 sub_100 = []
-sub_115[:] = [x for x in times if x <= 125]
-sub_100[:] = [x for x in times if x <= 100]
+sub_115[:] = [x for x in tick_times if x <= 125]
+sub_100[:] = [x for x in tick_times if x <= 100]
 
 no_anvil_num = str(anvils[0]) + ', ' + str(round(((anvils[0] / trials) * 100), 2)) + '%'
 one_anvil_num = str(anvils[1]) + ', ' + str(round(((anvils[1] / trials) * 100), 2)) + '%'
@@ -799,7 +807,7 @@ table_dataframe = pd.DataFrame({('trials = ' + str(trials)): ['no anvil', 'one a
 table_dataframe2 = pd.DataFrame({('trials = ' + str(trials)): ['no hammer', 'one hammer', 'two hammer'],
                                  'total, % of 1 anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
                                  '% of total trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
-                                 'reset chance': ['N/A', one_ham_rate, two_ham_rate]})
+                                 ('hammer rates ' + r'$\subset$' + ' 1 anvils'): ['N/A', one_ham_rate, two_ham_rate]})
 minutes_list = [' 0:45', ' 0:48', ' 0:51', ' 0:54', ' 0:57', ' 1:00', ' 1:03', ' 1:06', ' 1:09', ' 1:12', ' 1:15',
                 ' 1:18', ' 1:21', ' 1:24', ' 1:27', ' 1:30', ' 1:33', ' 1:36', ' 1:39', ' 1:42', ' 1:45', ' 1:48',
                 ' 1:51', ' 1:54', ' 1:57', ' 2:00', ' 2:03', ' 2:06', ' 2:09', ' 2:12', ' 2:15', ' 2:18', ' 2:21',
@@ -817,45 +825,37 @@ minutes_list_bigger_step = [' 0:00', ' 0:25', ' 0:50', ' 1:15', ' 1:40', ' 2:05'
 
 
 def plot_adjustment():
-    sns.despine(bottom=True, left=True)
     plt.tick_params(labelleft=False, left=False, labelbottom=False, bottom=False)
-    plt.subplots_adjust(wspace=.2, hspace=0)
+    # plt.subplots_adjust(wspace=.2, hspace=0)
 
 
-plt.subplot(3, 2, 1)
-mpl_table = plt.table(cellText=table_dataframe.values, rowLabels=table_dataframe.index,
+fig = plt.figure()
+gs = fig.add_gridspec(3, 2)
+ax1 = fig.add_subplot(gs[0, 0])
+ax2 = fig.add_subplot(gs[1, 0])
+ax5 = fig.add_subplot(gs[2, 1])
+ax3 = fig.add_subplot(gs[2, 1])
+ax6t = fig.add_subplot(gs[0, 1])
+ax6 = fig.add_subplot(gs[0, 1])
+ax4t = fig.add_subplot(gs[2, 0])
+ax4 = fig.add_subplot(gs[2, 0])
+ax4t.xaxis.set_visible(False)
+ax4t.yaxis.set_visible(False)
+
+mpl_table = ax1.table(cellText=table_dataframe.values, rowLabels=table_dataframe.index,
                       colLabels=table_dataframe.columns, cellLoc='center', rowLoc='center', loc='upper right')
 mpl_table.auto_set_font_size(False)
+ax1.axis(False)
 mpl_table.set_fontsize(9)
-plot_adjustment()
 
-plt.subplot(3, 2, 3)
-mpl_table2 = plt.table(cellText=table_dataframe2.values, rowLabels=table_dataframe2.index,
+
+mpl_table2 = ax2.table(cellText=table_dataframe2.values, rowLabels=table_dataframe2.index,
                        colLabels=table_dataframe2.columns, cellLoc='center', rowLoc='center', loc='upper right')
 mpl_table2.auto_set_font_size(False)
 mpl_table2.set_fontsize(9)
-plot_adjustment()
-plt.gcf().set_size_inches(18, 10)
+ax2.axis(False)
 
-plt.subplot(3, 2, 2)
-fourth_graph = sns.kdeplot(cum_cdf_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
-                           legend=True)
-fourth_empirical_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True)
-data_x, data_y = fourth_graph.lines[0].get_data()
-yi = .99
-xi = np.interp(yi, data_y, data_x)
-fourth_graph.set_title('cumulative probability of killing tekton')
-fourth_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi), yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1), ylabel='probability of killing tekton', xlabel='time of encounter in ticks')
-fourth_graph.set_xticklabels(fourth_graph.get_xticklabels(), rotation=45)
-aux_axis_fourth = fourth_graph.twiny()
-sns.kdeplot(ax=aux_axis_fourth, bins=80)
-fourth_graph.legend(labels=('theoretical', 'empirical'))
-aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)),
-                    xlabel='time of encounter in minutes and seconds')
-aux_axis_fourth.set_xticklabels(minutes_list_bigger_step, rotation=45)
-fourth_graph.grid('visible')
 tick_times_one_anvil[:] = [x for x in tick_times if x <= 150]
-np.mean(tick_times)
 
 n = pd.Series(np.random.randn(trials))
 first_q1 = float(np.quantile(n, .25))
@@ -880,49 +880,99 @@ xd = []
 for each in np.arange(45, 170, step=5):
     xd.append(str(each))
 step_increment = int(trials / tick_mod)
-plt.subplot(3, 2, 5)
-first_graph = sns.histplot(tick_times, kde=True, bins=bin_number, color='darkblue', legend=False)
-ymax_array1, bin_edges1 = np.histogram(tick_times, bins=bin_number, density=False)
-y_max1 = np.max(ymax_array1)
-remainder1 = divmod(y_max1, step_increment)
-adjusted_ymax1 = remainder1[0] + 1
-first_graph_xticks = (np.arange(75, 620, step=25))
-first_graph.set(yticks=(np.arange(0, (adjusted_ymax1 * (2 * step_increment)), step=step_increment)),
-                ylim=(0, (adjusted_ymax1 * step_increment)), ylabel='number of killed tektons in sample', xticks=first_graph_xticks, xlim=(75, 600))
-first_graph.set_title('tekton density histogram of ' + str(trials) + ' trials')
-plt.xlabel('time of encounter in ticks')
-first_graph.set_xticklabels(first_graph_xticks, rotation=45)
-second_axis = first_graph.twiny()
-sns.histplot(ax=second_axis, bins=80)
-second_axis_xticks = (np.arange(45, 400, step=15))
-second_axis.set(xticks=second_axis_xticks, xlim=(45, 360), xlabel='time of encounter in minutes and seconds')
-second_axis.set_xticklabels(minutes_list_big_step[3:27], rotation=45)
-first_graph.grid('visible')
+
 if trials == 100000:
     step_increment_second = trials / 1000
 else:
     step_increment_second = trials / 500
+fourth_graph = sns.kdeplot(cum_cdf_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
+                           legend=True)
+fourth_empirical_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True)
+data_x, data_y = fourth_graph.lines[0].get_data()
+data_x2, data_y2 = fourth_empirical_graph.lines[0].get_data()
+yi = .99
+xi = np.interp(yi, data_y, data_x)
+yi2 = .99
+xi2 = np.interp(yi2, data_y2, data_x2)
+fourth_graph.set_title('cumulative probability of killing tekton')
+fourth_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi))
+fourth_graph.set_xticklabels(fourth_graph.get_xticklabels(), rotation=45)
+fourth_graph.set(xlabel='time of encounter in ticks')
+aux_axis_fourth = fourth_graph.twiny()
+sns.kdeplot(ax=aux_axis_fourth, bins=80)
+fourth_graph.legend(labels=('theoretical', 'empirical'))
+fourth_graph.set(ylabel='probability of killing tekton')
+fourth_graph.set(yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1))
+aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)), xlabel='time of encounter in seconds')
+aux_axis_fourth.set_xticklabels(minutes_list_bigger_step, rotation=45)
+fourth_graph.grid('visible')
 
-plt.subplot(3, 2, 6)
-second_graph = sns.histplot(tick_times_one_anvil, kde=True, bins=bin_number_second, color='darkblue')
-ymax_array, bin_edges = np.histogram(tick_times_one_anvil, bins=bin_number_second, density=False)
-y_max = np.max(ymax_array)
+
+n2t, bins2t, pathces2t = ax5.hist(tick_times, bins=bin_number, density=False)
+n2, bins2, pathces2 = ax3.hist(tick_times, bins=bin_number, density=True, edgecolor='black', linewidth=.8)
+y_max2t = np.max(bins2t)
+
+remainder2t = divmod(y_max2t, step_increment)
+adjusted_ymax2t = remainder2t[0] + 1
+ax5.yaxis.tick_right()
+ax5.set(yticks=(np.arange(0, (y_max2t + step_increment), step=step_increment)), ylim=(0, (y_max2t + step_increment)))
+mu2 = np.mean(tick_times)
+sigma2 = statistics.stdev(tick_times)
+y2 = ((1 / (np.sqrt(2 * np.pi) * sigma2)) * np.exp(-0.5 * (1 / sigma2 * (bins2 - mu2))**2))
+ax3.plot(bins2, y2)
+ax3_xticks = (np.arange(75, (np.max(tick_times) + 25), step=25))
+ax3.set(xticks=ax3_xticks, xlim=(75, (np.max(tick_times))))
+ax3.xaxis.set_tick_params(rotation=45)
+ax3_aux_xaxis = ax3.secondary_xaxis('top')
+ax5.xaxis.set_visible(False)
+ax5.spines.top.set_visible(False)
+ax3_aux_xaxis.xaxis.set_tick_params(rotation=45)
+ax3_aux_xaxis.set(xticks=(np.arange(75, (np.max(tick_times)), step=25)), xlim=(75, (np.max(tick_times))))
+ax3_aux_xaxis_labels = np.arange(75, (np.max(tick_times)), step=25)
+ax3_aux_xaxis.set_xticklabels(minutes_list_big_step[3:(len(ax3_aux_xaxis_labels) + 3)])
+ax3.set(yticks=(np.arange(0, (np.max(n2) + .001), step=.0005)), ylim=(0, (np.max(n2) + .0005)))
+set_ = []
+ax3.set_xlabel('time of encounter in ticks')
+ax5.set_ylabel('number of killed tektons in sample')
+ax5.yaxis.set_label_position('right')
+ax3.set_ylabel('probability density')
+ax3.set_title('tekton density histogram of ' + str(trials) + ' trials')
+ax3.xaxis.grid(True)
+ax3.yaxis.grid(True)
+ax3.set_axisbelow(True)
+
+
+n, bins, pathces = ax6.hist(tick_times_one_anvil, bins=bin_number_second, density=True, edgecolor='black', linewidth=.8)
+nt, binst, pathcest = ax6t.hist(tick_times_one_anvil, bins=bin_number_second, density=True, edgecolor='black', linewidth=.8)
+y_max = np.max(bins)
+ax6t.xaxis.set_visible(False)
+ax6t.set(yticks=(np.arange(0, (y_max + step_increment_second), step=step_increment_second)), ylim=(0, (y_max + step_increment_second)), ylabel='number of one anvils')
+ax6t.yaxis.tick_right()
+ax6t.yaxis.set_label_position('right')
+ax6.set(yticks=(np.arange(0, (np.max(n) + .01), step=.005)), ylim=(0, (np.max(n) + .005)))
+mu = np.mean(tick_times_one_anvil)
+sigma = statistics.stdev(tick_times_one_anvil)
+y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
+     np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
+ax6.plot(bins, y)
 remainder = divmod(y_max, step_increment_second)
 adjusted_ymax = remainder[0] + 1
-second_graph_xticks = (np.arange(45, 170, step=5))
-second_graph.set(yticks=(np.arange(0, (adjusted_ymax * (2 * step_increment_second)), step=step_increment_second)), ylim=(0, (adjusted_ymax * step_increment_second)), ylabel='number of one anvils', xticks=second_graph_xticks, xlim=(75, 160), xlabel='time of encounter in ticks')
-second_graph.set_xticklabels(second_graph_xticks, rotation=45)
-second_graph.set_title('number of tektons under one anvil in ' + str(trials) + ' trials')
-aux_axis = second_graph.twiny()
-sns.histplot(ax=aux_axis, bins=80)
-aux_axis.set(xticks=(np.arange(45, 100, step=3)), xlim=(45, 96), xlabel='time of encounter in minutes and seconds')
-aux_axis.set_xticklabels(minutes_list[0:19], rotation=45)
-second_graph.legend(labels=('kde', (str((anvils[1] + anvils[0])) + ' total one anvils + no anvils')))
-second_graph.grid('visible')
-plt.subplots_adjust(wspace=.2, hspace=0)
-plt.gcf().set_size_inches(18, 13)
-print('script completed in', datetime.now() - (start_time - initialization_time), 'seconds')
+ax6_xticks = (np.arange(75, 170, step=5))
+ax6.set(xticks=ax6_xticks, xlim=(75, 165))
+ax6.xaxis.set_tick_params(rotation=45)
+ax6_aux_xaxis = ax6.secondary_xaxis('top')
+ax6_aux_xaxis.set(xticks=(np.arange(75, 170, step=5)), xlim=(75, 165))
+ax6_aux_xaxis.set_xticklabels(minutes_list[:19])
+ax6_aux_xaxis.xaxis.set_tick_params(rotation=45)
+ax6.set_xlabel('time of encounter in ticks')
+ax6.set_ylabel('Probability density')
+ax6.set_title('number of tektons under one anvil in ' + str(trials) + ' trials')
+ax6.xaxis.grid(True)
+ax6.yaxis.grid(True)
+ax6.set_axisbelow(True)
+plt.subplots_adjust(wspace=.25, hspace=0, right=.93, left=0.05, top=.93, bottom=.07)
 plt.show()
+
 
 # to do list
 # cfg saved defaults?
@@ -936,6 +986,7 @@ plt.show()
 
 #dear god the graphs
 #idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
+#tried to fix it... somehow its worse now all for the fucking grid kms
 
 #this is probably a horrible idea that ill regret but could possibly store the booleanvars from buttons into a list would be a lot cleaner
 #ok yeah that was a pretty fucking bad idea
@@ -945,3 +996,6 @@ plt.show()
 
 # is also bloated but weve tried this before to little success
 # def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
+
+#windows is a dogshit operating system
+
