@@ -809,7 +809,7 @@ table_dataframe = pd.DataFrame({('trials = ' + str(trials)): ['no anvil', 'one a
 table_dataframe2 = pd.DataFrame({('trials = ' + str(trials)): ['no hammer', 'one hammer', 'two hammer'],
                                  'total, % of 1 anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
                                  '% of total trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
-                                 ('hammer rates ' + r'$\subset$' + ' 1 anvils'): ['N/A', one_ham_rate, two_ham_rate]})
+                                 ('hammer rates ' + r'$\subset$' + ' 1 anvils'): ['N/A', one_ham_reset, two_ham_reset]})
 minutes_list = [' 0:45', ' 0:48', ' 0:51', ' 0:54', ' 0:57', ' 1:00', ' 1:03', ' 1:06', ' 1:09', ' 1:12', ' 1:15',
                 ' 1:18', ' 1:21', ' 1:24', ' 1:27', ' 1:30', ' 1:33', ' 1:36', ' 1:39', ' 1:42', ' 1:45', ' 1:48',
                 ' 1:51', ' 1:54', ' 1:57', ' 2:00', ' 2:03', ' 2:06', ' 2:09', ' 2:12', ' 2:15', ' 2:18', ' 2:21',
@@ -898,7 +898,7 @@ sns.kdeplot(ax=aux_axis_fourth, bins=80)
 fourth_graph.legend(labels=('theoretical', 'empirical'), labelcolor='black')
 aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)), xlabel='time of encounter in seconds')
 aux_axis_fourth.set_xticklabels(minutes_list_bigger_step, rotation=45)
-fourth_graph.grid('visible', color='b')
+fourth_graph.grid('visible', color='black')
 
 # total histogram graph
 n2t, bins2t, pathces2t = ax5.hist(tick_times, bins=bin_number, density=False, alpha=0)
@@ -925,9 +925,9 @@ ax3.set(ylabel='probability density', xlabel='time of encounter in ticks',
 ax3.locator_params(nbins=22, axis='y')
 ax5.locator_params(nbins=22, axis='y')
 ax5.yaxis.set_label_position('right')
-ax3.xaxis.grid(True, color='b')
+ax3.xaxis.grid(True, color='black')
 ax3.set_axisbelow(True)
-ax5.yaxis.grid(True, color='b')
+ax5.yaxis.grid(True, color='black')
 ax3.set_facecolor((0.0, 0.0, 0.0, 0.0))
 
 # under one anvil graph
@@ -956,10 +956,10 @@ ax6.spines.top.set_visible(False)
 ax6_aux_xaxis.set(xticks=(np.arange(75, 165, step=5)), xlim=(75, 160))
 ax6_aux_xaxis.set_xticklabels(minutes_list[:18])
 ax6_aux_xaxis.xaxis.set_tick_params(rotation=45)
-ax6.xaxis.grid(True, color='b')
+ax6.xaxis.grid(True, color='black')
 ax6.set_axisbelow(True)
 
-ax6t.yaxis.grid(True, color='b')
+ax6t.yaxis.grid(True, color='black')
 plt.subplots_adjust(wspace=.25, hspace=0, right=.93, left=0.05, top=.90, bottom=.07)
 print('script completed in', datetime.now() - (start_time - initialization_time), 'seconds')
 print(ax6t.yaxis.get_ticklocs())
@@ -976,9 +976,9 @@ plt.show()
 # def min_regen():
 # honestly cba its fine
 
-# dear god the graphs
-# idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
-# tried to fix it... somehow its worse now all for the fucking grid kms
+#dear god the graphs
+#idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
+#did my best
 
 # this is probably a horrible idea that ill regret but could possibly store the booleanvars from buttons into a list would be a lot cleaner
 # ok yeah that was a pretty fucking bad idea
@@ -989,4 +989,4 @@ plt.show()
 # is also bloated but weve tried this before to little success
 # def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
 
-# windows is a dogshit operating system
+#maybe add short lure option if i can be fucked
