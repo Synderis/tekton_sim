@@ -207,7 +207,10 @@ print('b ring:', check_var5.get())
 print('brim ring:', check_var6.get())
 print('tort:', check_var8.get())
 print('feros:', check_var7.get())
-print('lightbearer', lightbearer_equipped)
+print('vuln', check_var14.get())
+print('vuln book', check_var16.get())
+print('preveng', check_var11.get())
+print('lightbearer', check_var9.get())
 if five_only:
     four_and_five = False
 else:
@@ -586,7 +589,7 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
             else:
                 damage_val = 0
                 tekton.lower_hp(damage_val)
-        tek_check()
+    tek_check()
 
 
 def anvil_adjustment(veng):
@@ -766,6 +769,7 @@ for x in range(trials):
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
         anvil_adjustment(False)
+        min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
@@ -789,7 +793,7 @@ sub_100[:] = [x for x in tick_times if x <= 100]
 no_anvil_num = str(anvils[0]) + ', ' + str(round(((anvils[0] / trials) * 100), 2)) + '%'
 one_anvil_num = str(anvils[1]) + ', ' + str(round(((anvils[1] / trials) * 100), 2)) + '%'
 two_anvil_num = str(anvils[2]) + ', ' + str(round(((anvils[2] / trials) * 100), 2)) + '%'
-three_anvil_num = str(anvils[3]) + ', ' + str(round(((anvils[3] / trials) * 100), 2)) + '%'
+three_anvil_num = str(np.sum(anvils[3:])) + ', ' + str(round(((np.sum(anvils[3:]) / trials) * 100), 2)) + '%'
 temp1 = p.number_to_words(trials)
 no_ham_rate_tot = (str(round(((no_h_one_a / trials) * 100), 2)) + '%')
 one_ham_rate_tot = (str(round(((one_h_one_a / trials) * 100), 2)) + '%')
@@ -809,7 +813,7 @@ table_dataframe = pd.DataFrame({('trials = ' + str(trials)): ['no anvil', 'one a
 table_dataframe2 = pd.DataFrame({('trials = ' + str(trials)): ['no hammer', 'one hammer', 'two hammer'],
                                  'total, % of 1 anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
                                  '% of total trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
-                                 ('hammer rates ' + r'$\subset$' + ' 1 anvils'): ['N/A', one_ham_reset, two_ham_reset]})
+                                 ('1 anvil ham. ' + r'$\subset$' + ' total ham.'): ['N/A', (str(one_ham_reset) + ' 1 & 2 Ham.'), (str(two_ham_reset) + ' 2 ham. only')]})
 minutes_list = [' 0:45', ' 0:48', ' 0:51', ' 0:54', ' 0:57', ' 1:00', ' 1:03', ' 1:06', ' 1:09', ' 1:12', ' 1:15',
                 ' 1:18', ' 1:21', ' 1:24', ' 1:27', ' 1:30', ' 1:33', ' 1:36', ' 1:39', ' 1:42', ' 1:45', ' 1:48',
                 ' 1:51', ' 1:54', ' 1:57', ' 2:00', ' 2:03', ' 2:06', ' 2:09', ' 2:12', ' 2:15', ' 2:18', ' 2:21',
@@ -880,22 +884,22 @@ iqr_second = second_q3 - second_q1
 bin_width_second = (2 * iqr_second) / ((len(m)) ** (1. / 3.))
 bin_number_second = int(np.ceil((m.max() - m.min()) / bin_width_second))
 
-fourth_graph = sns.kdeplot(cum_cdf_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
+cumulative_total_graph = sns.kdeplot(cum_cdf_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
                            legend=True, color='crimson')
-fourth_empirical_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True, color='green')
-data_x, data_y = fourth_graph.lines[0].get_data()
+empirical_total_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True, color='green')
+data_x, data_y = cumulative_total_graph.lines[0].get_data()
 yi = .99
 xi = np.interp(yi, data_y, data_x)
-fourth_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi), yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1),
+cumulative_total_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi), yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1),
                  ylabel='probability of killing tekton', xlabel='time of encounter in ticks',
                  title='cumulative probability of killing tekton')
-fourth_graph.set_xticklabels(fourth_graph.get_xticklabels(), rotation=45)
-aux_axis_fourth = fourth_graph.twiny()
-sns.kdeplot(ax=aux_axis_fourth, bins=80)
-fourth_graph.legend(labels=('theoretical', 'empirical'), labelcolor='black')
-aux_axis_fourth.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)), xlabel='time of encounter in seconds')
-aux_axis_fourth.set_xticklabels(minutes_list_bigger_step, rotation=45)
-fourth_graph.grid('visible', color='black')
+cumulative_total_graph.set_xticklabels(cumulative_total_graph.get_xticklabels(), rotation=45)
+aux_axis_cumulative = cumulative_total_graph.twiny()
+sns.kdeplot(ax=aux_axis_cumulative, bins=80)
+cumulative_total_graph.legend(labels=('theoretical', 'empirical'), labelcolor='black')
+aux_axis_cumulative.set(xticks=(np.arange(0, 840, step=25)), xlim=(0, (xi * .6)), xlabel='time of encounter in seconds')
+aux_axis_cumulative.set_xticklabels(minutes_list_bigger_step, rotation=45)
+cumulative_total_graph.grid('visible', color='black')
 
 # total histogram graph
 n2t, bins2t, pathces2t = total_sample_aux_plot.hist(tick_times, bins=bin_number, density=False, alpha=0)
@@ -959,7 +963,6 @@ one_anvil_main_plot.set_axisbelow(True)
 one_anvil_aux_plot.yaxis.grid(True, color='black')
 plt.subplots_adjust(wspace=.25, hspace=0, right=.93, left=0.05, top=.90, bottom=.07)
 print('script completed in', datetime.now() - (start_time - initialization_time), 'seconds')
-print(one_anvil_aux_plot.yaxis.get_ticklocs())
 one_anvil_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
 
 plt.show()
