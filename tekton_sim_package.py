@@ -45,6 +45,7 @@ check_var13 = tk.BooleanVar()
 check_var14 = tk.BooleanVar()
 check_var15 = tk.BooleanVar()
 check_var16 = tk.BooleanVar()
+check_var17 = tk.BooleanVar()
 
 
 def abort():
@@ -138,6 +139,21 @@ def check_correction2():
             return
 
 
+def check_correction_veng():
+    if check_var11.get():
+        if check_var17.get():
+            return C17.toggle()
+        else:
+            return
+
+
+def check_correction_veng2():
+    if check_var17.get():
+        if check_var11.get():
+            return C11.toggle()
+        else:
+            return
+
 string_variable = tk.StringVar()
 C1 = tk.Checkbutton(root, text="five tick only", variable=check_var1, onvalue=1, offvalue=0)
 C1.place(x=25, y=80)
@@ -157,7 +173,7 @@ C7 = tk.Checkbutton(root, text="feros", variable=check_var7, onvalue=1, offvalue
 C7.place(x=75, y=130)
 C8 = tk.Checkbutton(root, text="tort", variable=check_var8, onvalue=1, offvalue=0)
 C8.place(x=25, y=130)
-C11 = tk.Checkbutton(root, text="pre veng", variable=check_var11, onvalue=1, offvalue=0)
+C11 = tk.Checkbutton(root, text="pre veng", variable=check_var11, onvalue=1, offvalue=0, command=check_correction_veng)
 C11.place(x=120, y=55)
 C11.toggle()
 C9 = tk.Checkbutton(root, text="lightbearer", variable=check_var9, onvalue=1, offvalue=0, command=spec_ring)
@@ -173,10 +189,12 @@ C13.place(x=150, y=30)
 C15 = tk.Checkbutton(root, text="1mil", variable=check_var15, onvalue=1, offvalue=0, command=check_correction_temp4)
 C15.place(x=225, y=30)
 C14 = tk.Checkbutton(root, text="vuln", variable=check_var14, onvalue=1, offvalue=0)
-C14.place(x=150, y=80)
+C14.place(x=130, y=80)
 C14.toggle()
 C16 = tk.Checkbutton(root, text="vuln book", variable=check_var16, onvalue=1, offvalue=0)
 C16.place(x=190, y=55)
+C17 = tk.Checkbutton(root, text="veng camp", variable=check_var17, onvalue=1, offvalue=0, command=check_correction_veng2)
+C17.place(x=190, y=80)
 
 trials_text = tk.Label(root, textvariable=string_variable)
 trials_text.place(x=30, y=10)
@@ -243,7 +261,7 @@ stab = 'stab'
 
 class Offensive:
     def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status,
-                 specced_last_anvil, no_hammer_count, one_hammer_count, two_hammer_count):
+                 specced_last_anvil, no_hammer_count, one_hammer_count, two_hammer_count, hp_pool):
         self.four_tick_hit_counter = four_tick_hit_counter
         self.five_tick_hit_counter = five_tick_hit_counter
         self.time_parameter = time_parameter
@@ -254,6 +272,7 @@ class Offensive:
         self.no_hammer_count = no_hammer_count
         self.one_hammer_count = one_hammer_count
         self.two_hammer_count = two_hammer_count
+        self.hp_pool = hp_pool
 
 
 class Gear:
@@ -331,15 +350,15 @@ else:
 
 
 class NPC:
-    def __init__(self, hp, defence, stab_def, slash_def, crush_def, max_veng, alive_status=True, anvil_checked=False):
+    def __init__(self, hp, defence, stab_def, slash_def, crush_def, veng_count, alive_status=True, anvil_checked=False):
         self.hp = hp
         self.defence = defence
         self.stab_def = stab_def
         self.slash_def = slash_def
         self.crush_def = crush_def
-        self.max_veng = max_veng
         self.alive_status = alive_status
         self.anvil_checked = anvil_checked
+        self.veng_count = veng_count
 
     def lower_hp(self, damage):
         self.hp -= damage
@@ -592,7 +611,26 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
     tek_check()
 
 
-def anvil_adjustment(veng):
+def veng_calc():
+    if cm:
+        if check_var17.get():
+            if tekton.veng_count < 2:
+                return 65
+            else:
+                return 70
+        else:
+            return 70
+    else:
+        if check_var17.get():
+            if tekton.veng_count < 2:
+                return 44
+            else:
+                return 50
+        else:
+            return 50
+
+
+def anvil_adjustment(pre_veng, veng_camp):
     if tekton.hp > 0:
         cycle_select = random.randint(3, 6)
         hit_metrics.idle_time += ((cycle_select * 3) + 10)
@@ -600,8 +638,20 @@ def anvil_adjustment(veng):
             tekton.hp += (cycle_select * hp_regen_per_cycle)
         if tekton.defence < base_def:
             tekton.defence += (cycle_select * def_regen_per_cycle)
-        if veng:
-            tekton.lower_hp(random.randint(1, tekton.max_veng))
+        if pre_veng:
+            tekton.lower_hp(random.randint(1, veng_calc()))
+        elif veng_camp:
+            for _ in range(2):
+                if tekton.veng_count < 4:
+                    if hit_metrics.hp_pool > veng_calc():
+                        tekton.lower_hp(random.randint(1, veng_calc()))
+                    elif hit_metrics.hp_pool > (veng_calc() * 2):
+                        tekton.lower_hp(random.randint(1, math.ceil((veng_calc() * .5))))
+                    else:
+                        return tekton.hp
+                    tekton.veng_count += 1
+                else:
+                    return tekton.hp
         else:
             return tekton.hp
     else:
@@ -721,59 +771,53 @@ def defence_roll(spec, four_tick, five_tick, enraged):
 
 for x in range(trials):
     hit_metrics = Offensive(0, 0, time_parameter=0.0, phase='', idle_time=0, fang_spec_status=True,
-                            specced_last_anvil=False, no_hammer_count=0, one_hammer_count=0, two_hammer_count=0)
+                            specced_last_anvil=False, no_hammer_count=0, one_hammer_count=0, two_hammer_count=0, hp_pool=121)
     if cm:
-        tekton = NPC(450, 246, 155, 165, 105, 65, alive_status=True, anvil_checked=False)
+        tekton = NPC(450, 246, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
         base_hp = 450
         base_def = 246
     else:
-        tekton = NPC(300, 205, 155, 165, 105, 44, alive_status=True, anvil_checked=False)
+        tekton = NPC(300, 205, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
         base_hp = 300
         base_def = 205
     def_regen_per_cycle = int((base_def * .05) + 1)
     hp_regen_per_cycle = int((base_hp * .01) + 1)
-
+    hit_metrics.no_hammer_count = 0
+    hit_metrics.one_hammer_count = 0
+    hit_metrics.two_hammer_count = 0
+    hit_metrics.phase = 0
+    hit_metrics.four_tick_hit_counter = 0
+    hit_metrics.five_tick_hit_counter = 0
+    veng_count = 0
     if four_and_five:
-        hit_metrics.no_hammer_count = 0
-        hit_metrics.one_hammer_count = 0
-        hit_metrics.two_hammer_count = 0
-        hit_metrics.phase = 0
-        hit_metrics.four_tick_hit_counter = 0
-        hit_metrics.five_tick_hit_counter = 0
         vuln_check()
         pre_anvil()
-        anvil_adjustment(check_var11.get())
+        anvil_adjustment(check_var11.get(), check_var17.get())
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(False)
+        anvil_adjustment(check_var11.get(), check_var17.get())
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(False)
+                anvil_adjustment(check_var11.get(), check_var17.get())
                 min_regen()
                 continue
             else:
                 time()
                 break
     elif five_only:
-        hit_metrics.no_hammer_count = 0
-        hit_metrics.one_hammer_count = 0
-        hit_metrics.two_hammer_count = 0
-        hit_metrics.phase = 0
-        hit_metrics.four_tick_hit_counter = 0
-        hit_metrics.five_tick_hit_counter = 0
         vuln_check()
         pre_anvil()
-        anvil_adjustment(check_var11.get())
+        anvil_adjustment(check_var11.get(), check_var17.get())
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(False)
+        anvil_adjustment(check_var11.get(), check_var17.get())
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(False)
+                anvil_adjustment(check_var11.get(), check_var17.get())
                 min_regen()
                 continue
             else:
@@ -975,6 +1019,8 @@ plt.show()
 # can probably just tack this one onto post anvil adjustment
 # def min_regen():
 # honestly cba its fine
+
+#update numbers for veng
 
 #dear god the graphs
 #idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
