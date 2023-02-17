@@ -39,13 +39,13 @@ check_var7 = tk.BooleanVar()
 check_var8 = tk.BooleanVar()
 check_var9 = tk.BooleanVar()
 check_var10 = tk.BooleanVar()
-check_var11 = tk.BooleanVar()
+prevenge_check = tk.BooleanVar()
 check_var12 = tk.BooleanVar()
 check_var13 = tk.BooleanVar()
 check_var14 = tk.BooleanVar()
 check_var15 = tk.BooleanVar()
 check_var16 = tk.BooleanVar()
-check_var17 = tk.BooleanVar()
+veng_camp_check = tk.BooleanVar()
 
 
 def abort():
@@ -140,16 +140,16 @@ def check_correction2():
 
 
 def check_correction_veng():
-    if check_var11.get():
-        if check_var17.get():
+    if prevenge_check.get():
+        if veng_camp_check.get():
             return C17.toggle()
         else:
             return
 
 
 def check_correction_veng2():
-    if check_var17.get():
-        if check_var11.get():
+    if veng_camp_check.get():
+        if prevenge_check.get():
             return C11.toggle()
         else:
             return
@@ -173,7 +173,7 @@ C7 = tk.Checkbutton(root, text="feros", variable=check_var7, onvalue=1, offvalue
 C7.place(x=75, y=130)
 C8 = tk.Checkbutton(root, text="tort", variable=check_var8, onvalue=1, offvalue=0)
 C8.place(x=25, y=130)
-C11 = tk.Checkbutton(root, text="pre veng", variable=check_var11, onvalue=1, offvalue=0, command=check_correction_veng)
+C11 = tk.Checkbutton(root, text="pre veng", variable=prevenge_check, onvalue=1, offvalue=0, command=check_correction_veng)
 C11.place(x=120, y=55)
 C11.toggle()
 C9 = tk.Checkbutton(root, text="lightbearer", variable=check_var9, onvalue=1, offvalue=0, command=spec_ring)
@@ -193,7 +193,7 @@ C14.place(x=130, y=80)
 C14.toggle()
 C16 = tk.Checkbutton(root, text="vuln book", variable=check_var16, onvalue=1, offvalue=0)
 C16.place(x=190, y=55)
-C17 = tk.Checkbutton(root, text="veng camp", variable=check_var17, onvalue=1, offvalue=0, command=check_correction_veng2)
+C17 = tk.Checkbutton(root, text="veng camp", variable=veng_camp_check, onvalue=1, offvalue=0, command=check_correction_veng2)
 C17.place(x=190, y=80)
 
 trials_text = tk.Label(root, textvariable=string_variable)
@@ -227,7 +227,8 @@ print('tort:', check_var8.get())
 print('feros:', check_var7.get())
 print('vuln', check_var14.get())
 print('vuln book', check_var16.get())
-print('preveng', check_var11.get())
+print('preveng', prevenge_check.get())
+print('veng camp', veng_camp_check.get())
 print('lightbearer', check_var9.get())
 if five_only:
     four_and_five = False
@@ -613,21 +614,21 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
 
 def veng_calc():
     if cm:
-        if check_var17.get():
+        if veng_camp_check.get():
             if tekton.veng_count < 2:
+                return 58
+            else:
                 return 65
-            else:
-                return 70
         else:
-            return 70
+            return 65
     else:
-        if check_var17.get():
+        if veng_camp_check.get():
             if tekton.veng_count < 2:
-                return 44
+                return 39
             else:
-                return 50
+                return 44
         else:
-            return 50
+            return 44
 
 
 def anvil_adjustment(pre_veng, veng_camp):
@@ -792,15 +793,16 @@ for x in range(trials):
     if four_and_five:
         vuln_check()
         pre_anvil()
-        anvil_adjustment(check_var11.get(), check_var17.get())
+        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+        hit_metrics.hp_pool += 44
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(check_var11.get(), check_var17.get())
+        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(check_var11.get(), check_var17.get())
+                anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
                 min_regen()
                 continue
             else:
@@ -809,15 +811,16 @@ for x in range(trials):
     elif five_only:
         vuln_check()
         pre_anvil()
-        anvil_adjustment(check_var11.get(), check_var17.get())
+        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+        hit_metrics.hp_pool += 44
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(check_var11.get(), check_var17.get())
+        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(check_var11.get(), check_var17.get())
+                anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
                 min_regen()
                 continue
             else:
