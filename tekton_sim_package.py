@@ -27,7 +27,7 @@ trials = 10000
 root = tk.Tk()
 module_time = datetime.now()
 initialization_time = module_time - selection_time
-root.title('Tekton Sim Version 1.2')
+root.title('Tekton Sim Version 1.4')
 root.geometry('280x205')
 check_var1 = tk.BooleanVar()
 check_var2 = tk.BooleanVar()
@@ -56,19 +56,19 @@ def trials_selection():
     global trials
     if check_var10.get():
         trials = 1000
-        string_variable.set('number of trials ' + str(trials))
+        string_variable.set('number of trials: ' + str(trials))
     elif check_var12.get():
         trials = 10000
-        string_variable.set('number of trials ' + str(trials))
+        string_variable.set('number of trials: ' + str(trials))
     elif check_var13.get():
         trials = 100000
-        string_variable.set('number of trials ' + str(trials))
+        string_variable.set('number of trials: ' + str(trials))
     elif check_var15.get():
         trials = 1000000
-        string_variable.set('number of trials ' + str(trials))
+        string_variable.set('number of trials: ' + str(trials))
     else:
         trials = 10000
-        string_variable.set('number of trials ' + str(trials))
+        string_variable.set('number of trials: ' + str(trials))
     return trials
 
 
@@ -260,6 +260,7 @@ slash = 'slash'
 stab = 'stab'
 
 
+# These are the metrics that we will be measuring EACH trial and they will reset to initial conditions at the start
 class Offensive:
     def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status,
                  specced_last_anvil, no_hammer_count, one_hammer_count, two_hammer_count, hp_pool):
@@ -276,6 +277,7 @@ class Offensive:
         self.hp_pool = hp_pool
 
 
+# This is the block where gear is stored this will stay static throughout each trial.
 class Gear:
     def __init__(self, dwh_att_bonus, dwh_str_bonus, four_tick_att_bonus, four_tick_str_bonus, fang_att_bonus,
                  fang_str_bonus, scy_att_bonus, scy_str_bonus, gear_multiplier, static_crush_weapon, five_tick_weapon):
@@ -292,6 +294,8 @@ class Gear:
         self.five_tick_weapon = five_tick_weapon
 
 
+# Function that will modify the gear setup based on selections from the gui prompt
+# Now that im looking at it again gear selection and loadout adjuster are probably redundant functions
 def gear_selection():
     attack_gear = 0
     strength_gear = 0
@@ -330,6 +334,7 @@ def loadout_adjuster(att_modifier, str_modifier, five_tick_style):
     return
 
 
+# These are the default loadouts that will be selected based on gui selection
 if inq:
     loadout = Gear(dwh_att_bonus=183, dwh_str_bonus=136, four_tick_att_bonus=183, four_tick_str_bonus=140,
                    fang_att_bonus=155, fang_str_bonus=154, scy_att_bonus=90, scy_str_bonus=118, gear_multiplier=1.025,
@@ -350,6 +355,7 @@ else:
     print('----------')
 
 
+# These are the stats of the npc itself and its active statuses
 class NPC:
     def __init__(self, hp, defence, stab_def, slash_def, crush_def, veng_count, alive_status=True, anvil_checked=False):
         self.hp = hp
@@ -376,6 +382,7 @@ class NPC:
             self.defence = 0
 
 
+# This damage value selection based on adjusted gear and whether the hit chance function determines a hit
 def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
     def strength_selector():
         strength_bonus = 0
@@ -409,6 +416,7 @@ def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
     return int(damage_selection)
 
 
+# I forget exactly why I added these but I believe there was some weird rounding error that math.ceiling wasnt fixing
 def is_whole(whole):
     return whole % 1 == 0
 
@@ -418,6 +426,7 @@ def adjust_def_integer():
         tekton.defence = int(tekton.defence) + 1
 
 
+# Attack roll function that determines the roll that will be used in hit chance based on gear loadout and NPC stats
 def attack_roll(spec_attack, four_tick, five_tick, multiplier):
     def attack_selector():
         attack_bonus = 0
@@ -447,6 +456,7 @@ def attack_roll(spec_attack, four_tick, five_tick, multiplier):
     return first_roll
 
 
+# Function that will take the attack roll and defense roll and determine hit or miss of main damage phase
 def hit_chancer(spec, four_tick, five_tick, fang_spec_hit, status):
     attack_roll_check = 0
     def_roll_check = defence_roll(spec, four_tick, five_tick, status)
@@ -475,6 +485,8 @@ def hit_chancer(spec, four_tick, five_tick, fang_spec_hit, status):
         return False
 
 
+# Function that determines whether vulnerability hit which lowers initial tekton defense before any other def. reduction
+# I need to add something that lets this be more adjustable based on varying gear
 def vuln_check():
     if check_var14.get():
         vuln = np.random.choice(result_array, 1, replace=True, p=[.62, (1 - .62)])
@@ -492,6 +504,7 @@ def vuln_check():
         return
 
 
+# Function that determines how many hammers hit in each trial
 def tek_check():
     global no_h_one_a, one_h_one_a, two_h_one_a, no_hammer_total, one_hammer_total, two_hammer_total
     if not tekton.alive_status:
@@ -534,6 +547,7 @@ def hammer_missed():
     return
 
 
+# Function that will take the attack roll and defense roll and determine hit or miss of specs for initial def reduction
 def spec_hit(instances, status):
     for _ in range(instances):
         defence_roll(True, False, False, status)
@@ -551,6 +565,7 @@ def spec_hit(instances, status):
     return
 
 
+# Function that will be called to indicate number of hits in damage phase for mace
 def four_tick_hit(instances, status):
     for _ in range(instances):
         if tekton.hp > 0:
@@ -567,6 +582,7 @@ def four_tick_hit(instances, status):
         tek_check()
 
 
+# Function that will be called to make each scythe hit roll seperately for each of the 3 instances of dmg
 def scy_dmg(step_down, status):
     if hit_chancer(False, False, True, False, status):
         damage_val = hit_value_roll(False, four_tick=False, five_tick=True, max_hit_modifier=step_down)
@@ -577,6 +593,7 @@ def scy_dmg(step_down, status):
     return damage_val
 
 
+# Function that will be called to indicate number of hits in damage phase for 5 tick weapon
 def five_tick_hit(instances, status, fang_spec_pass_var):
     for _ in range(instances):
         defence_roll(False, False, True, status)
