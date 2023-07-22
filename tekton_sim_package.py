@@ -1015,8 +1015,8 @@ one_anvil_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
 plt.show()
 
 # to do list
-# fucking leave some comments on the code you degenerate fuck
-# optimize backend code
+# leave some comments on the code
+# optimize calculation code
 # maybe fix table box margin
 
 # can probably just tack this one onto post anvil adjustment
@@ -1026,16 +1026,16 @@ plt.show()
 #update numbers for veng
 
 #dear god the graphs
-#idk man graphs are fucked nothing wanted to go into functions seaborn makes me want to choke on broken glass
+#idk man graphs are f nothing wanted to go into functions seaborn is painful
 #did my best
 
 # this is probably a horrible idea that ill regret but could possibly store the booleanvars from buttons into a list would be a lot cleaner
-# ok yeah that was a pretty fucking bad idea
+# ok yeah that was a pretty bad idea
 
-# this whole block is kinda a fucking nightmare thanks to fang but uh idk at least the function within the function was clever in a kinda suspic way
+# this whole block is kinda a nightmare thanks to fang but uh idk at least the function within the function was clever in a kinda suspic way
 # def attack_roll(spec_attack, four_tick, five_tick, multiplier):
 
-# is also bloated but weve tried this before to little success
+# is also bloated but tried before with little success
 # def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
 
-#maybe add short lure option if i can be fucked
+#maybe add short lure option
