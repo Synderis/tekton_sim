@@ -27,7 +27,7 @@ trials = 10000
 root = tk.Tk()
 module_time = datetime.now()
 initialization_time = module_time - selection_time
-root.title('Tekton Sim Version 1.4')
+root.title('Tekton Sim Version 1.6')
 root.geometry('280x205')
 check_var1 = tk.BooleanVar()
 check_var2 = tk.BooleanVar()
@@ -322,14 +322,12 @@ def gear_selection():
 
 
 def loadout_adjuster(att_modifier, str_modifier, five_tick_style):
-    loadout.dwh_str_bonus += str_modifier
-    loadout.four_tick_str_bonus += str_modifier
-    loadout.fang_str_bonus += str_modifier
-    loadout.scy_str_bonus += str_modifier
-    loadout.dwh_att_bonus += att_modifier
-    loadout.four_tick_att_bonus += att_modifier
-    loadout.fang_att_bonus += att_modifier
-    loadout.scy_att_bonus += att_modifier
+    loadout_list = [loadout.dwh_str_bonus, loadout.four_tick_str_bonus, loadout.fang_str_bonus, loadout.scy_str_bonus,
+                    loadout.dwh_att_bonus, loadout.four_tick_att_bonus, loadout.fang_att_bonus, loadout.scy_att_bonus]
+    loadout_list[:3] = [i + str_modifier for i in loadout_list[:3]]
+    loadout_list[4:] = [i + att_modifier for i in loadout_list[4:]]
+    (loadout.dwh_str_bonus, loadout.four_tick_str_bonus, loadout.fang_str_bonus, loadout.scy_str_bonus,
+     loadout.dwh_att_bonus, loadout.four_tick_att_bonus, loadout.fang_att_bonus, loadout.scy_att_bonus) = loadout_list
     loadout.five_tick_weapon = five_tick_style
     return
 
@@ -473,16 +471,10 @@ def hit_chancer(spec, four_tick, five_tick, fang_spec_hit, status):
                 attack_roll_check = attack_roll(False, False, True, multiplier=1.0)
                 attack_roll_check2 = attack_roll(False, False, True, multiplier=1.0)
             roll_list = [attack_roll_check, attack_roll_check2]
-            if any(i > def_roll_check for i in roll_list):
-                return True
-            else:
-                return False
+            return True if any(i > def_roll_check for i in roll_list) else False
         else:
             attack_roll_check = attack_roll(False, False, True, multiplier=1.0)
-    if attack_roll_check > def_roll_check:
-        return True
-    else:
-        return False
+    return True if attack_roll_check > def_roll_check else False
 
 
 # Function that determines whether vulnerability hit which lowers initial tekton defense before any other def. reduction
@@ -616,9 +608,8 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
                 damage_val = 0
                 tekton.lower_hp(damage_val)
         elif scythe:
-            scy_dmg(1, status)
-            scy_dmg(.5, status)
-            scy_dmg(.25, status)
+            for i in [1, .5, .25]:
+                scy_dmg(i, status)
         else:
             if hit_chancer(False, False, True, False, status):
                 damage_val = hit_value_roll(False, four_tick=False, five_tick=True)
@@ -632,18 +623,12 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
 def veng_calc():
     if cm:
         if veng_camp_check.get():
-            if tekton.veng_count < 2:
-                return 58
-            else:
-                return 65
+            return 58 if tekton.veng_count < 2 else 65
         else:
             return 65
     else:
         if veng_camp_check.get():
-            if tekton.veng_count < 2:
-                return 39
-            else:
-                return 44
+            return 39 if tekton.veng_count < 2 else 44
         else:
             return 44
 
@@ -720,10 +705,9 @@ def can_i_spec():
     else:
         if hit_metrics.specced_last_anvil:
             hit_metrics.fang_spec_status = False
-            return hit_metrics.fang_spec_status
         else:
             hit_metrics.fang_spec_status = True
-            return hit_metrics.fang_spec_status
+        return hit_metrics.fang_spec_status
 
 
 def post_anvil(fang_lb_spec, spec_alternation):
@@ -763,26 +747,19 @@ def post_anvil(fang_lb_spec, spec_alternation):
 
 
 def defence_roll(spec, four_tick, five_tick, enraged):
-    max_def_roll = 0
     test_weapon = ""
     if enraged:
-        tekton.stab_def = 280
-        tekton.slash_def = 280
-        tekton.crush_def = 180
+        tekton.stab_def, tekton.slash_def, tekton.crush_def = [280, 280, 180]
     else:
-        tekton.stab_def = 155
-        tekton.slash_def = 165
-        tekton.crush_def = 105
+        tekton.stab_def, tekton.slash_def, tekton.crush_def = [155, 165, 105]
     if spec or four_tick:
         test_weapon = loadout.static_crush_weapon
     elif five_tick:
         test_weapon = loadout.five_tick_weapon
-    if test_weapon == crush:
-        max_def_roll = math.ceil((tekton.defence + 9) * (tekton.crush_def + 64))
-    elif test_weapon == stab:
-        max_def_roll = math.ceil((tekton.defence + 9) * (tekton.stab_def + 64))
-    elif test_weapon == slash:
-        max_def_roll = math.ceil((tekton.defence + 9) * (tekton.slash_def + 64))
+    def_roll_dict = {'crush': math.ceil((tekton.defence + 9) * (tekton.crush_def + 64)),
+                     'stab': math.ceil((tekton.defence + 9) * (tekton.stab_def + 64)),
+                     'slash': math.ceil((tekton.defence + 9) * (tekton.slash_def + 64))}
+    max_def_roll = def_roll_dict[test_weapon]
     rolled_def = random.randint(0, max_def_roll)
     return rolled_def
 
@@ -792,12 +769,11 @@ for x in range(trials):
                             specced_last_anvil=False, no_hammer_count=0, one_hammer_count=0, two_hammer_count=0, hp_pool=121)
     if cm:
         tekton = NPC(450, 246, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
-        base_hp = 450
-        base_def = 246
+        base_hp, base_def = [450, 246]
     else:
         tekton = NPC(300, 205, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
-        base_hp = 300
-        base_def = 205
+        base_hp, base_def = [300, 205]
+
     def_regen_per_cycle = int((base_def * .05) + 1)
     hp_regen_per_cycle = int((base_hp * .01) + 1)
     hit_metrics.no_hammer_count = 0
@@ -854,22 +830,32 @@ sub_100 = []
 sub_115[:] = [x for x in tick_times if x <= 125]
 sub_100[:] = [x for x in tick_times if x <= 100]
 
-no_anvil_num = str(anvils[0]) + ', ' + str(round(((anvils[0] / trials) * 100), 2)) + '%'
-one_anvil_num = str(anvils[1]) + ', ' + str(round(((anvils[1] / trials) * 100), 2)) + '%'
-two_anvil_num = str(anvils[2]) + ', ' + str(round(((anvils[2] / trials) * 100), 2)) + '%'
-three_anvil_num = str(np.sum(anvils[3:])) + ', ' + str(round(((np.sum(anvils[3:]) / trials) * 100), 2)) + '%'
+
+def output_formatter(numerator, divisor, long):
+    if long:
+        output = f'{str(numerator)}, {str(round(((numerator / divisor) * 100), 2))}%'
+    else:
+        output = f'{str(round(((numerator / divisor) * 100), 2))}%'
+    return output
+
+
+no_anvil_num = output_formatter(anvils[0], trials, True)
+one_anvil_num = output_formatter(anvils[1], trials, True)
+two_anvil_num = output_formatter(anvils[2], trials, True)
+three_anvil_num = output_formatter(np.sum(anvils[3:]), trials, True)
 temp1 = p.number_to_words(trials)
-no_ham_rate_tot = (str(round(((no_h_one_a / trials) * 100), 2)) + '%')
-one_ham_rate_tot = (str(round(((one_h_one_a / trials) * 100), 2)) + '%')
-two_ham_rate_tot = (str(round(((two_h_one_a / trials) * 100), 2)) + '%')
-one_ham_reset = (str(round((((one_h_one_a + two_h_one_a) / (
-        one_hammer_total + two_hammer_total)) * 100), 2)) + '%')
-two_ham_reset = (str(round(((two_h_one_a / two_hammer_total) * 100), 2)) + '%')
-no_ham_rate = (str(no_h_one_a) + ', ' + str(round(((no_h_one_a / anvils[1]) * 100), 2)) + '%')
-one_ham_rate = (str(one_h_one_a) + ', ' + str(round(((one_h_one_a / anvils[1]) * 100), 2)) + '%')
-two_ham_rate = (str(two_h_one_a) + ', ' + str(round(((two_h_one_a / anvils[1]) * 100), 2)) + '%')
-sub_115_df = (str(round((((np.count_nonzero(sub_115)) / anvils[1]) * 100), 2)) + '%')
-sub_100_df = (str(round((((np.count_nonzero(sub_100)) / anvils[1]) * 100), 2)) + '%')
+no_ham_rate_tot = output_formatter(no_h_one_a, trials, False)
+one_ham_rate_tot = output_formatter(one_h_one_a, trials, False)
+two_ham_rate_tot = output_formatter(two_h_one_a, trials, False)
+
+one_ham_reset = output_formatter((one_h_one_a + two_h_one_a), (one_hammer_total + two_hammer_total), False)
+two_ham_reset = output_formatter(two_h_one_a, two_hammer_total, False)
+no_ham_rate = output_formatter(no_h_one_a, anvils[1], True)
+one_ham_rate = output_formatter(one_h_one_a, anvils[1], True)
+two_ham_rate = output_formatter(two_h_one_a, anvils[1], True)
+sub_115_df = output_formatter(np.count_nonzero(sub_115), anvils[1], False)
+sub_100_df = output_formatter(np.count_nonzero(sub_100), anvils[1], False)
+
 table_dataframe = pd.DataFrame({('trials = ' + str(trials)): ['no anvil', 'one anvil', 'two anvil', 'three or more'],
                                 'total, % total': [no_anvil_num, one_anvil_num, two_anvil_num, three_anvil_num],
                                 'sub 1:15 %': ['N/A', sub_115_df, '0', '0'],
@@ -899,8 +885,7 @@ def plot_adjustment():
     # plt.subplots_adjust(wspace=.2, hspace=0)
 
 
-plt.rcParams.update(
-    {"lines.color": "silver", "patch.edgecolor": "black", "text.color": "black", "axes.facecolor": "silver",
+plt.rcParams.update({"lines.color": "silver", "patch.edgecolor": "black", "text.color": "black", "axes.facecolor": "silver",
      "axes.edgecolor": "black", "axes.labelcolor": "black", "xtick.color": "black", "ytick.color": "black",
      "grid.color": "silver", "figure.facecolor": "dimgray", "figure.edgecolor": "dimgray", "axes.titlecolor": "black",
      "savefig.facecolor": "black", "savefig.edgecolor": "black"})
@@ -917,8 +902,8 @@ ax4t = fig.add_subplot(gs[2, 0])
 ax4 = fig.add_subplot(gs[2, 0])
 ax4t.axes.set_visible(False)
 xd = ['gray', 'gray', 'gray', 'gray']
-colors = [["silver", "silver", "silver", "silver"], ["silver", "silver", "silver", "silver"],
-          ["silver", "silver", "silver", "silver"], ["silver", "silver", "silver", "silver"]]
+silver = ["silver", "silver", "silver", "silver"]
+colors = [silver, silver, silver, silver]
 mpl_table = ax1.table(cellText=table_dataframe.values,
                       colLabels=table_dataframe.columns, cellLoc='center', rowLoc='center', loc='upper right',
                       cellColours=colors, colColours=xd)
