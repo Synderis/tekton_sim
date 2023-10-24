@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import scipy.stats as stats
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 import sys
 import os
 
@@ -29,23 +31,24 @@ module_time = datetime.now()
 initialization_time = module_time - selection_time
 root.title('Tekton Sim Version 1.6')
 root.geometry('280x205')
-check_var1 = tk.BooleanVar()
-check_var2 = tk.BooleanVar()
-check_var3 = tk.BooleanVar()
-check_var4 = tk.BooleanVar()
-check_var5 = tk.BooleanVar()
-check_var6 = tk.BooleanVar()
-check_var7 = tk.BooleanVar()
-check_var8 = tk.BooleanVar()
-check_var9 = tk.BooleanVar()
+five_tick_only_check = tk.BooleanVar()
+cm_check = tk.BooleanVar()
+inq_check = tk.BooleanVar()
+fang_check = tk.BooleanVar()
+b_ring_check = tk.BooleanVar()
+brim_check = tk.BooleanVar()
+feros_check = tk.BooleanVar()
+tort_check = tk.BooleanVar()
+lightbearer_check = tk.BooleanVar()
 check_var10 = tk.BooleanVar()
 prevenge_check = tk.BooleanVar()
 check_var12 = tk.BooleanVar()
 check_var13 = tk.BooleanVar()
-check_var14 = tk.BooleanVar()
+vuln_check = tk.BooleanVar()
 check_var15 = tk.BooleanVar()
-check_var16 = tk.BooleanVar()
+book_of_water_check = tk.BooleanVar()
 veng_camp_check = tk.BooleanVar()
+sql_import = tk.BooleanVar()
 
 
 def abort():
@@ -55,7 +58,7 @@ def abort():
 def trials_selection():
     global trials
     if check_var10.get():
-        trials = 1000
+        trials = 10
         string_variable.set('number of trials: ' + str(trials))
     elif check_var12.get():
         trials = 10000
@@ -89,15 +92,15 @@ def check_correction_temp4():
 
 
 def check_correction():
-    if check_var5.get():
-        if check_var6.get():
+    if b_ring_check.get():
+        if brim_check.get():
             return C6.toggle()
         else:
             return
 
 
 def fang_checker_lb():
-    while not check_var4.get():
+    while not fang_check.get():
         return C9.toggle()
 
 
@@ -125,15 +128,15 @@ def check_correction_new(num):
 
 
 def spec_ring():
-    if check_var4.get():
+    if fang_check.get():
         return
     else:
         C9.deselect()
 
 
 def check_correction2():
-    if check_var6.get():
-        if check_var5.get():
+    if brim_check.get():
+        if b_ring_check.get():
             return C5.toggle()
         else:
             return
@@ -155,28 +158,28 @@ def check_correction_veng2():
             return
 
 string_variable = tk.StringVar()
-C1 = tk.Checkbutton(root, text="five tick only", variable=check_var1, onvalue=1, offvalue=0)
+C1 = tk.Checkbutton(root, text="five tick only", variable=five_tick_only_check, onvalue=1, offvalue=0)
 C1.place(x=25, y=80)
-C2 = tk.Checkbutton(root, text="CM", variable=check_var2, onvalue=1, offvalue=0)
+C2 = tk.Checkbutton(root, text="CM", variable=cm_check, onvalue=1, offvalue=0)
 C2.place(x=25, y=55)
 C2.toggle()
-C3 = tk.Checkbutton(root, text="inq", variable=check_var3, onvalue=1, offvalue=0)
+C3 = tk.Checkbutton(root, text="inq", variable=inq_check, onvalue=1, offvalue=0)
 C3.place(x=75, y=55)
 C3.toggle()
-C4 = tk.Checkbutton(root, text="fang", variable=check_var4, onvalue=1, offvalue=0)
+C4 = tk.Checkbutton(root, text="fang", variable=fang_check, onvalue=1, offvalue=0)
 C4.place(x=140, y=130)
-C5 = tk.Checkbutton(root, text="b ring", variable=check_var5, onvalue=1, offvalue=0, command=check_correction)
+C5 = tk.Checkbutton(root, text="b ring", variable=b_ring_check, onvalue=1, offvalue=0, command=check_correction)
 C5.place(x=75, y=155)
-C6 = tk.Checkbutton(root, text="brim", variable=check_var6, onvalue=1, offvalue=0, command=check_correction2)
+C6 = tk.Checkbutton(root, text="brim", variable=brim_check, onvalue=1, offvalue=0, command=check_correction2)
 C6.place(x=25, y=155)
-C7 = tk.Checkbutton(root, text="feros", variable=check_var7, onvalue=1, offvalue=0)
+C7 = tk.Checkbutton(root, text="feros", variable=feros_check, onvalue=1, offvalue=0)
 C7.place(x=75, y=130)
-C8 = tk.Checkbutton(root, text="tort", variable=check_var8, onvalue=1, offvalue=0)
+C8 = tk.Checkbutton(root, text="tort", variable=tort_check, onvalue=1, offvalue=0)
 C8.place(x=25, y=130)
 C11 = tk.Checkbutton(root, text="pre veng", variable=prevenge_check, onvalue=1, offvalue=0, command=check_correction_veng)
 C11.place(x=120, y=55)
 C11.toggle()
-C9 = tk.Checkbutton(root, text="lightbearer", variable=check_var9, onvalue=1, offvalue=0, command=spec_ring)
+C9 = tk.Checkbutton(root, text="lightbearer", variable=lightbearer_check, onvalue=1, offvalue=0, command=spec_ring)
 C9.place(x=140, y=155)
 C10 = tk.Checkbutton(root, text="1000", variable=check_var10, onvalue=1, offvalue=0, command=check_correction_temp1)
 C10.place(x=25, y=30)
@@ -188,13 +191,15 @@ C13 = tk.Checkbutton(root, text="100000", variable=check_var13, onvalue=1, offva
 C13.place(x=150, y=30)
 C15 = tk.Checkbutton(root, text="1mil", variable=check_var15, onvalue=1, offvalue=0, command=check_correction_temp4)
 C15.place(x=225, y=30)
-C14 = tk.Checkbutton(root, text="vuln", variable=check_var14, onvalue=1, offvalue=0)
+C14 = tk.Checkbutton(root, text="vuln", variable=vuln_check, onvalue=1, offvalue=0)
 C14.place(x=130, y=80)
 C14.toggle()
-C16 = tk.Checkbutton(root, text="vuln book", variable=check_var16, onvalue=1, offvalue=0)
+C16 = tk.Checkbutton(root, text="vuln book", variable=book_of_water_check, onvalue=1, offvalue=0)
 C16.place(x=190, y=55)
 C17 = tk.Checkbutton(root, text="veng camp", variable=veng_camp_check, onvalue=1, offvalue=0, command=check_correction_veng2)
 C17.place(x=190, y=80)
+C18 = tk.Checkbutton(root, text="import to SQL", variable=sql_import, onvalue=1, offvalue=0)
+C18.place(x=180, y=180)
 
 trials_text = tk.Label(root, textvariable=string_variable)
 trials_text.place(x=30, y=10)
@@ -206,30 +211,38 @@ button_submit = tk.Button(root, text="Submit", command=root.destroy)
 button_submit.place(x=100, y=180)
 root.mainloop()
 
+checkbuttons_list = [('cm', cm_check.get()), ('inq', inq_check.get()), ('five_tick_only', five_tick_only_check.get()),
+                     ('fang', fang_check.get()), ('b_ring', b_ring_check.get()), ('brim', brim_check.get()),
+                     ('feros', feros_check.get()), ('tort', tort_check.get()), ('lightbearer', lightbearer_check.get()),
+                     ('preveng', prevenge_check.get()), ('veng_camp', veng_camp_check.get()),
+                     ('vuln', vuln_check.get()), ('book_of_water', book_of_water_check.get())]
+
+
+
 start_time = datetime.now()
 result_array = ["hit", "miss"]
-inq = check_var3.get()
-cm = check_var2.get()
-fang = check_var4.get()
-five_only = check_var1.get()
+inq = inq_check.get()
+cm = cm_check.get()
+fang = fang_check.get()
+five_only = five_tick_only_check.get()
 if fang:
     scythe = False
 else:
     scythe = True
-lightbearer_equipped = check_var9.get()
+lightbearer_equipped = lightbearer_check.get()
 print('inq:', inq)
 print('cm:', cm)
 print('fang:', fang)
 print('five tick only:', five_only)
-print('b ring:', check_var5.get())
-print('brim ring:', check_var6.get())
-print('tort:', check_var8.get())
-print('feros:', check_var7.get())
-print('vuln', check_var14.get())
-print('vuln book', check_var16.get())
+print('b ring:', b_ring_check.get())
+print('brim ring:', brim_check.get())
+print('tort:', tort_check.get())
+print('feros:', feros_check.get())
+print('vuln', vuln_check.get())
+print('vuln book', book_of_water_check.get())
 print('preveng', prevenge_check.get())
 print('veng camp', veng_camp_check.get())
-print('lightbearer', check_var9.get())
+print('lightbearer', lightbearer_check.get())
 if five_only:
     four_and_five = False
 else:
@@ -248,7 +261,9 @@ two_h_one_anvil_temp = 0
 no_h_one_a = 0
 one_h_one_a = 0
 two_h_one_a = 0
-anvils = [0] * 30
+hammer_count_list = []
+anvil_count_list = []
+anvils = [0] * 100
 times = []
 tick_times = []
 tick_times_one_anvil = []
@@ -258,12 +273,17 @@ two_hammer_total = 0
 crush = 'crush'
 slash = 'slash'
 stab = 'stab'
+if sql_import.get():
+    connection_string = "Driver={ODBC Driver 17 for SQL Server}; Server=DESKTOP-3TJHN4P\MSSQLSERVER01; Database=tekton_sim_data; Trusted_Connection=yes;"
+    connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
+    engine = create_engine(connection_url)
+    conn = engine.connect()
 
 
 # These are the metrics that we will be measuring EACH trial and they will reset to initial conditions at the start
 class Offensive:
     def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status,
-                 specced_last_anvil, no_hammer_count, one_hammer_count, two_hammer_count, hp_pool):
+                 specced_last_anvil, no_hammer_count, one_hammer_count, two_hammer_count, hp_pool, current_anvil):
         self.four_tick_hit_counter = four_tick_hit_counter
         self.five_tick_hit_counter = five_tick_hit_counter
         self.time_parameter = time_parameter
@@ -275,6 +295,7 @@ class Offensive:
         self.one_hammer_count = one_hammer_count
         self.two_hammer_count = two_hammer_count
         self.hp_pool = hp_pool
+        self.current_anvil = current_anvil
 
 
 # This is the block where gear is stored this will stay static throughout each trial.
@@ -299,15 +320,15 @@ class Gear:
 def gear_selection():
     attack_gear = 0
     strength_gear = 0
-    if check_var5.get():
+    if b_ring_check.get():
         strength_gear += 8
-    if check_var6.get():
+    if brim_check.get():
         attack_gear += 4
         strength_gear += 4
-    if check_var8.get():
+    if tort_check.get():
         attack_gear += 5
         strength_gear += 2
-    if check_var7.get():
+    if feros_check.get():
         attack_gear += 4
         strength_gear += 2
     if fang:
@@ -479,10 +500,10 @@ def hit_chancer(spec, four_tick, five_tick, fang_spec_hit, status):
 
 # Function that determines whether vulnerability hit which lowers initial tekton defense before any other def. reduction
 # I need to add something that lets this be more adjustable based on varying gear
-def vuln_check():
-    if check_var14.get():
+def vuln_applicator():
+    if vuln_check.get():
         vuln = np.random.choice(result_array, 1, replace=True, p=[.62, (1 - .62)])
-        if check_var16.get():
+        if book_of_water_check.get():
             book_of_water = .15
         else:
             book_of_water = .10
@@ -496,6 +517,9 @@ def vuln_check():
         return
 
 
+
+
+
 # Function that determines how many hammers hit in each trial
 def tek_check():
     global no_h_one_a, one_h_one_a, two_h_one_a, no_hammer_total, one_hammer_total, two_hammer_total
@@ -504,27 +528,35 @@ def tek_check():
             if hit_metrics.phase == 0:
                 anvils[0] += 1
                 tekton.anvil_checked = True
+                hit_metrics.current_anvil += 1
             elif hit_metrics.phase == 1:
                 anvils[1] += 1
                 tekton.anvil_checked = True
+                hit_metrics.current_anvil += 1
                 if hit_metrics.one_hammer_count == 2:
                     two_h_one_a += 1
                     two_hammer_total += 1
+                    hammer_count_list.append(2)
                 elif hit_metrics.no_hammer_count == 2:
                     no_h_one_a += 1
                     no_hammer_total += 1
+                    hammer_count_list.append(0)
                 else:
                     one_h_one_a += 1
                     one_hammer_total += 1
+                    hammer_count_list.append(1)
             else:
-                if hit_metrics.one_hammer_count == 2:
-                    two_hammer_total += 1
-                elif hit_metrics.no_hammer_count == 2:
-                    no_hammer_total += 1
-                else:
-                    one_hammer_total += 1
                 anvils[hit_metrics.phase] += 1
                 tekton.anvil_checked = True
+                if hit_metrics.one_hammer_count == 2:
+                    two_hammer_total += 1
+                    hammer_count_list.append(2)
+                elif hit_metrics.no_hammer_count == 2:
+                    no_hammer_total += 1
+                    hammer_count_list.append(0)
+                else:
+                    one_hammer_total += 1
+                    hammer_count_list.append(1)
             return
         else:
             return
@@ -571,7 +603,7 @@ def four_tick_hit(instances, status):
         else:
             damage_val = 0
             tekton.lower_hp(damage_val)
-        tek_check()
+    tek_check()
 
 
 # Function that will be called to make each scythe hit roll seperately for each of the 3 instances of dmg
@@ -623,12 +655,18 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
 def veng_calc():
     if cm:
         if veng_camp_check.get():
-            return 58 if tekton.veng_count < 2 else 65
+            if tekton.veng_count < 2:
+                return 58
+            else:
+                return 65
         else:
             return 65
     else:
         if veng_camp_check.get():
-            return 39 if tekton.veng_count < 2 else 44
+            if tekton.veng_count < 2:
+                return 39
+            else:
+                return 44
         else:
             return 44
 
@@ -683,6 +721,7 @@ def time():
     times.append(hit_metrics.time_parameter)
     hit_metrics.time_parameter = (five_total + four_total + idle_total + 12 + 17)
     tick_times.append(hit_metrics.time_parameter)
+    anvil_count_list.append(hit_metrics.phase)
 
 
 def pre_anvil():
@@ -766,7 +805,7 @@ def defence_roll(spec, four_tick, five_tick, enraged):
 
 for x in range(trials):
     hit_metrics = Offensive(0, 0, time_parameter=0.0, phase='', idle_time=0, fang_spec_status=True,
-                            specced_last_anvil=False, no_hammer_count=0, one_hammer_count=0, two_hammer_count=0, hp_pool=121)
+                            specced_last_anvil=False, no_hammer_count=0, one_hammer_count=0, two_hammer_count=0, hp_pool=121, current_anvil=0)
     if cm:
         tekton = NPC(450, 246, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
         base_hp, base_def = [450, 246]
@@ -784,47 +823,67 @@ for x in range(trials):
     hit_metrics.five_tick_hit_counter = 0
     veng_count = 0
     if four_and_five:
-        vuln_check()
+        vuln_applicator()
         pre_anvil()
         anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
         hit_metrics.hp_pool += 44
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+        anvil_adjustment(False, veng_camp_check.get())
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+                anvil_adjustment(False, veng_camp_check.get())
                 min_regen()
                 continue
             else:
                 time()
                 break
     elif five_only:
-        vuln_check()
+        vuln_applicator()
         pre_anvil()
         anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
         hit_metrics.hp_pool += 44
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+        anvil_adjustment(False, veng_camp_check.get())
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+                anvil_adjustment(False, veng_camp_check.get())
                 min_regen()
                 continue
             else:
                 time()
                 break
-
+print(anvils)
+print(anvil_count_list)
+print(hammer_count_list)
+print(len(anvil_count_list), len(hammer_count_list))
 p = inflect.engine()
 
+print(len(tick_times))
+results_df = pd.DataFrame(list(zip(tick_times, anvil_count_list, hammer_count_list)), columns=['tick_times', 'anvil_count', 'hammer_count'])
+for name, gear_val in checkbuttons_list:
+    if gear_val:
+        results_df[name] = 1
+    else:
+        results_df[name] = 0
+print(results_df)
+if sql_import.get():
+    temp = input('port to sql?')
+if sql_import.get():
+    if temp == 'y':
+        # noinspection PyUnboundLocalVariable
+        results_df.to_sql('tekton_results', con=conn, if_exists='append', index=False)
 tick_times_raw = tick_times
 hist2, bin_edges2 = np.histogram(tick_times_raw, density=True)
-cum_cdf_raw = np.cumsum(hist2 * np.diff(bin_edges2))
+diff_bin_edge = np.diff(bin_edges2)
+data_ = hist2 * diff_bin_edge
+print('th')
+cum_cdf_raw = np.cumsum(data_, axis=0)
 sub_115 = []
 sub_100 = []
 sub_115[:] = [x for x in tick_times if x <= 125]
@@ -933,9 +992,9 @@ iqr_second = second_q3 - second_q1
 bin_width_second = (2 * iqr_second) / ((len(m)) ** (1. / 3.))
 bin_number_second = int(np.ceil((m.max() - m.min()) / bin_width_second))
 
-cumulative_total_graph = sns.kdeplot(cum_cdf_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
+cumulative_total_graph = sns.kdeplot(tick_times_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
                            legend=True, color='crimson')
-empirical_total_graph = sns.ecdfplot(cum_cdf_raw, x=tick_times_raw, legend=True, color='green')
+empirical_total_graph = sns.ecdfplot(tick_times_raw, x=tick_times_raw, legend=True, color='green')
 data_x, data_y = cumulative_total_graph.lines[0].get_data()
 yi = .99
 xi = np.interp(yi, data_y, data_x)
@@ -1039,5 +1098,7 @@ plt.show()
 
 # is also bloated but tried before with little success
 # def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
+
+#redo how hammers are logged using the dataframe to avoid missing entries same with anvils
 
 #maybe add short lure option
