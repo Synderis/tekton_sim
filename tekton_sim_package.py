@@ -1,7 +1,6 @@
 from datetime import datetime
 
 selection_time = datetime.now()
-from multiprocessing import Process, Pipe
 import math
 import statistics
 import random
@@ -17,12 +16,6 @@ from sqlalchemy.engine import URL
 import sys
 import os
 
-
-def f(child_conn):
-    data_1 = table_dataframe
-    # data_2 = table_dataframe2
-    child_conn.send(data_1)
-    child_conn.close()
 
 
 trials = 10000
@@ -50,6 +43,11 @@ book_of_water_check = tk.BooleanVar()
 veng_camp_check = tk.BooleanVar()
 sql_import = tk.BooleanVar()
 
+desired_width = 350
+pd.set_option('display.width', desired_width)
+np.set_printoptions(linewidth=desired_width)
+pd.set_option('display.max_columns', 17)
+
 
 def abort():
     return sys.exit(0)
@@ -58,7 +56,7 @@ def abort():
 def trials_selection():
     global trials
     if check_var10.get():
-        trials = 10
+        trials = 1000
         string_variable.set('number of trials: ' + str(trials))
     elif check_var12.get():
         trials = 10000
@@ -156,6 +154,7 @@ def check_correction_veng2():
             return C11.toggle()
         else:
             return
+
 
 string_variable = tk.StringVar()
 C1 = tk.Checkbutton(root, text="five tick only", variable=five_tick_only_check, onvalue=1, offvalue=0)
@@ -258,23 +257,19 @@ effective_spec_strength_lvl = int(strength_level * piety_strength + 0 + 8)
 no_h_one_anvil_temp = 0
 one_h_one_anvil_temp = 0
 two_h_one_anvil_temp = 0
-no_h_one_a = 0
-one_h_one_a = 0
-two_h_one_a = 0
 hammer_count_list = []
 anvil_count_list = []
-anvils = [0] * 100
 times = []
 tick_times = []
 tick_times_one_anvil = []
-no_hammer_total = 0
-one_hammer_total = 0
-two_hammer_total = 0
+hp_check_list = []
+
 crush = 'crush'
 slash = 'slash'
 stab = 'stab'
+
 if sql_import.get():
-    connection_string = "Driver={ODBC Driver 17 for SQL Server}; Server=DESKTOP-3TJHN4P\MSSQLSERVER01; Database=tekton_sim_data; Trusted_Connection=yes;"
+    connection_string = r"Driver={ODBC Driver 17 for SQL Server}; Server=DESKTOP-3TJHN4P\MSSQLSERVER01; Database=tekton_sim_data; Trusted_Connection=yes;"
     connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
     engine = create_engine(connection_url)
     conn = engine.connect()
@@ -283,7 +278,7 @@ if sql_import.get():
 # These are the metrics that we will be measuring EACH trial and they will reset to initial conditions at the start
 class Offensive:
     def __init__(self, four_tick_hit_counter, five_tick_hit_counter, time_parameter, phase, idle_time, fang_spec_status,
-                 specced_last_anvil, no_hammer_count, one_hammer_count, two_hammer_count, hp_pool, current_anvil):
+                 specced_last_anvil, hammer_missed_count, hammer_hit_count, hp_pool):
         self.four_tick_hit_counter = four_tick_hit_counter
         self.five_tick_hit_counter = five_tick_hit_counter
         self.time_parameter = time_parameter
@@ -291,11 +286,9 @@ class Offensive:
         self.idle_time = idle_time
         self.fang_spec_status = fang_spec_status
         self.specced_last_anvil = specced_last_anvil
-        self.no_hammer_count = no_hammer_count
-        self.one_hammer_count = one_hammer_count
-        self.two_hammer_count = two_hammer_count
+        self.hammer_missed_count = hammer_missed_count
+        self.hammer_hit_count = hammer_hit_count
         self.hp_pool = hp_pool
-        self.current_anvil = current_anvil
 
 
 # This is the block where gear is stored this will stay static throughout each trial.
@@ -376,24 +369,18 @@ else:
 
 # These are the stats of the npc itself and its active statuses
 class NPC:
-    def __init__(self, hp, defence, stab_def, slash_def, crush_def, veng_count, alive_status=True, anvil_checked=False):
+    def __init__(self, hp, defence, stab_def, slash_def, crush_def, veng_count):
         self.hp = hp
         self.defence = defence
         self.stab_def = stab_def
         self.slash_def = slash_def
         self.crush_def = crush_def
-        self.alive_status = alive_status
-        self.anvil_checked = anvil_checked
         self.veng_count = veng_count
 
     def lower_hp(self, damage):
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
-        if self.hp == 0:
-            self.alive_status = False
-        else:
-            self.alive_status = True
 
     def lower_def(self, amount):
         self.defence -= amount
@@ -517,57 +504,19 @@ def vuln_applicator():
         return
 
 
-
-
-
-# Function that determines how many hammers hit in each trial
-def tek_check():
-    global no_h_one_a, one_h_one_a, two_h_one_a, no_hammer_total, one_hammer_total, two_hammer_total
-    if not tekton.alive_status:
-        if not tekton.anvil_checked:
-            if hit_metrics.phase == 0:
-                anvils[0] += 1
-                tekton.anvil_checked = True
-                hit_metrics.current_anvil += 1
-            elif hit_metrics.phase == 1:
-                anvils[1] += 1
-                tekton.anvil_checked = True
-                hit_metrics.current_anvil += 1
-                if hit_metrics.one_hammer_count == 2:
-                    two_h_one_a += 1
-                    two_hammer_total += 1
-                    hammer_count_list.append(2)
-                elif hit_metrics.no_hammer_count == 2:
-                    no_h_one_a += 1
-                    no_hammer_total += 1
-                    hammer_count_list.append(0)
-                else:
-                    one_h_one_a += 1
-                    one_hammer_total += 1
-                    hammer_count_list.append(1)
-            else:
-                anvils[hit_metrics.phase] += 1
-                tekton.anvil_checked = True
-                if hit_metrics.one_hammer_count == 2:
-                    two_hammer_total += 1
-                    hammer_count_list.append(2)
-                elif hit_metrics.no_hammer_count == 2:
-                    no_hammer_total += 1
-                    hammer_count_list.append(0)
-                else:
-                    one_hammer_total += 1
-                    hammer_count_list.append(1)
-            return
-        else:
-            return
-    else:
-        return
+def hammer_check():
+    if hit_metrics.hammer_hit_count == 2:
+        hammer_count_list.append(2)
+    if hit_metrics.hammer_hit_count == 1:
+        hammer_count_list.append(1)
+    if hit_metrics.hammer_hit_count == 0:
+        hammer_count_list.append(0)
 
 
 def hammer_missed():
     tekton.lower_def(int((tekton.defence * .05)))
     adjust_def_integer()
-    hit_metrics.no_hammer_count += 1
+    hit_metrics.hammer_missed_count += 1
     return
 
 
@@ -581,7 +530,7 @@ def spec_hit(instances, status):
             if damage_val > 0:
                 tekton.lower_def(int((tekton.defence * .3)))
                 adjust_def_integer()
-                hit_metrics.one_hammer_count += 1
+                hit_metrics.hammer_hit_count += 1
             else:
                 hammer_missed()
         else:
@@ -603,7 +552,6 @@ def four_tick_hit(instances, status):
         else:
             damage_val = 0
             tekton.lower_hp(damage_val)
-    tek_check()
 
 
 # Function that will be called to make each scythe hit roll seperately for each of the 3 instances of dmg
@@ -649,7 +597,6 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
             else:
                 damage_val = 0
                 tekton.lower_hp(damage_val)
-    tek_check()
 
 
 def veng_calc():
@@ -671,7 +618,27 @@ def veng_calc():
             return 44
 
 
-def anvil_adjustment(pre_veng, veng_camp):
+def veng_applicator(pre_veng, veng_camp):
+    if pre_veng:
+        tekton.lower_hp(random.randint(1, veng_calc()))
+        return tekton.hp
+    elif veng_camp:
+        for _ in range(2):
+            if tekton.veng_count < 4:
+                if hit_metrics.hp_pool > veng_calc():
+                    tekton.lower_hp(random.randint(1, veng_calc()))
+                elif hit_metrics.hp_pool > (veng_calc() * 2):
+                    tekton.lower_hp(random.randint(1, math.ceil((veng_calc() * .5))))
+                else:
+                    return tekton.hp
+                tekton.veng_count += 1
+            else:
+                return tekton.hp
+    else:
+        return tekton.hp
+
+
+def anvil_adjustment():
     if tekton.hp > 0:
         cycle_select = random.randint(3, 6)
         hit_metrics.idle_time += ((cycle_select * 3) + 10)
@@ -679,22 +646,6 @@ def anvil_adjustment(pre_veng, veng_camp):
             tekton.hp += (cycle_select * hp_regen_per_cycle)
         if tekton.defence < base_def:
             tekton.defence += (cycle_select * def_regen_per_cycle)
-        if pre_veng:
-            tekton.lower_hp(random.randint(1, veng_calc()))
-        elif veng_camp:
-            for _ in range(2):
-                if tekton.veng_count < 4:
-                    if hit_metrics.hp_pool > veng_calc():
-                        tekton.lower_hp(random.randint(1, veng_calc()))
-                    elif hit_metrics.hp_pool > (veng_calc() * 2):
-                        tekton.lower_hp(random.randint(1, math.ceil((veng_calc() * .5))))
-                    else:
-                        return tekton.hp
-                    tekton.veng_count += 1
-                else:
-                    return tekton.hp
-        else:
-            return tekton.hp
     else:
         return tekton.hp
     return tekton.hp
@@ -727,6 +678,7 @@ def time():
 def pre_anvil():
     if four_and_five:
         spec_hit(2, False)
+        hammer_check()
         four_tick_hit(3, False)
         five_tick_hit(1, False, False)
         four_tick_hit(1, False)
@@ -805,36 +757,39 @@ def defence_roll(spec, four_tick, five_tick, enraged):
 
 for x in range(trials):
     hit_metrics = Offensive(0, 0, time_parameter=0.0, phase='', idle_time=0, fang_spec_status=True,
-                            specced_last_anvil=False, no_hammer_count=0, one_hammer_count=0, two_hammer_count=0, hp_pool=121, current_anvil=0)
+                            specced_last_anvil=False, hammer_missed_count=0, hammer_hit_count=0, hp_pool=121)
     if cm:
-        tekton = NPC(450, 246, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
+        tekton = NPC(450, 246, 155, 165, 105, veng_count=0)
         base_hp, base_def = [450, 246]
     else:
-        tekton = NPC(300, 205, 155, 165, 105, alive_status=True, anvil_checked=False, veng_count=0)
+        tekton = NPC(300, 205, 155, 165, 105, veng_count=0)
         base_hp, base_def = [300, 205]
 
     def_regen_per_cycle = int((base_def * .05) + 1)
     hp_regen_per_cycle = int((base_hp * .01) + 1)
-    hit_metrics.no_hammer_count = 0
-    hit_metrics.one_hammer_count = 0
-    hit_metrics.two_hammer_count = 0
+    hit_metrics.hammer_missed_count = 0
+    hit_metrics.hammer_hit_count = 0
     hit_metrics.phase = 0
     hit_metrics.four_tick_hit_counter = 0
     hit_metrics.five_tick_hit_counter = 0
-    veng_count = 0
+    tekton.veng_count = 0
     if four_and_five:
         vuln_applicator()
         pre_anvil()
-        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+        veng_applicator(prevenge_check.get(), veng_camp_check.get())
+        hp_check_list.append(tekton.hp)
+        anvil_adjustment()
         hit_metrics.hp_pool += 44
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(False, veng_camp_check.get())
+        veng_applicator(False, veng_camp_check.get())
+        anvil_adjustment()
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(False, veng_camp_check.get())
+                veng_applicator(False, veng_camp_check.get())
+                anvil_adjustment()
                 min_regen()
                 continue
             else:
@@ -843,51 +798,69 @@ for x in range(trials):
     elif five_only:
         vuln_applicator()
         pre_anvil()
-        anvil_adjustment(prevenge_check.get(), veng_camp_check.get())
+        veng_applicator(prevenge_check.get(), veng_camp_check.get())
+        hp_check_list.append(tekton.hp)
+        anvil_adjustment()
         hit_metrics.hp_pool += 44
         min_regen()
         post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-        anvil_adjustment(False, veng_camp_check.get())
+        veng_applicator(False, veng_camp_check.get())
+        anvil_adjustment()
         min_regen()
         while True:
             if tekton.hp > 0:
                 post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
-                anvil_adjustment(False, veng_camp_check.get())
+                veng_applicator(False, veng_camp_check.get())
+                anvil_adjustment()
                 min_regen()
                 continue
             else:
                 time()
                 break
-print(anvils)
-print(anvil_count_list)
-print(hammer_count_list)
+
+
 print(len(anvil_count_list), len(hammer_count_list))
 p = inflect.engine()
 
-print(len(tick_times))
-results_df = pd.DataFrame(list(zip(tick_times, anvil_count_list, hammer_count_list)), columns=['tick_times', 'anvil_count', 'hammer_count'])
+
+results_df = pd.DataFrame(list(zip(tick_times, anvil_count_list, hammer_count_list, hp_check_list)),
+                          columns=['tick_times', 'anvil_count', 'hammer_count', 'hp_after_pre_anvil'])
 for name, gear_val in checkbuttons_list:
     if gear_val:
         results_df[name] = 1
     else:
         results_df[name] = 0
 print(results_df)
+
 if sql_import.get():
     temp = input('port to sql?')
-if sql_import.get():
     if temp == 'y':
         # noinspection PyUnboundLocalVariable
         results_df.to_sql('tekton_results', con=conn, if_exists='append', index=False)
+
+no_anvils = len(results_df[(results_df['anvil_count'] == 0)].copy())
+one_anvils = len(results_df[(results_df['anvil_count'] == 1)].copy())
+two_anvils = len(results_df[(results_df['anvil_count'] == 2)].copy())
+three_or_more_anvils = len(results_df[(results_df['anvil_count'] >= 3)].copy())
+no_h_one_a = len(results_df[(results_df['hammer_count'] == 0) & (results_df['anvil_count'] == 1)].copy())
+no_hammer_total = len(results_df[(results_df['hammer_count'] == 0)].copy())
+one_h_one_a = len(results_df[(results_df['hammer_count'] == 1) & (results_df['anvil_count'] == 1)].copy())
+one_hammer_total = len(results_df[(results_df['hammer_count'] == 1)].copy())
+two_h_one_a = len(results_df[(results_df['hammer_count'] == 2) & (results_df['anvil_count'] == 1)].copy())
+two_hammer_total = len(results_df[(results_df['hammer_count'] == 2)][['hammer_count']].copy())
+tick_times_df = results_df.copy()
+tick_times_df['completion'] = 1
+tick_times_df = tick_times_df[['tick_times', 'completion']]
+tick_times_one_anvil = tick_times_df[tick_times_df['tick_times'] <= 150][['tick_times']].copy()
+
 tick_times_raw = tick_times
 hist2, bin_edges2 = np.histogram(tick_times_raw, density=True)
 diff_bin_edge = np.diff(bin_edges2)
 data_ = hist2 * diff_bin_edge
-print('th')
+
 cum_cdf_raw = np.cumsum(data_, axis=0)
-sub_115 = []
-sub_100 = []
-sub_115[:] = [x for x in tick_times if x <= 125]
-sub_100[:] = [x for x in tick_times if x <= 100]
+sub_115 = len(results_df[(results_df['tick_times']<=125)].copy())
+sub_100 = len(results_df[(results_df['tick_times']<=100)].copy())
 
 
 def output_formatter(numerator, divisor, long):
@@ -898,10 +871,10 @@ def output_formatter(numerator, divisor, long):
     return output
 
 
-no_anvil_num = output_formatter(anvils[0], trials, True)
-one_anvil_num = output_formatter(anvils[1], trials, True)
-two_anvil_num = output_formatter(anvils[2], trials, True)
-three_anvil_num = output_formatter(np.sum(anvils[3:]), trials, True)
+no_anvil_num = output_formatter(no_anvils, trials, True)
+one_anvil_num = output_formatter(one_anvils, trials, True)
+two_anvil_num = output_formatter(two_anvils, trials, True)
+three_anvil_num = output_formatter(three_or_more_anvils, trials, True)
 temp1 = p.number_to_words(trials)
 no_ham_rate_tot = output_formatter(no_h_one_a, trials, False)
 one_ham_rate_tot = output_formatter(one_h_one_a, trials, False)
@@ -909,16 +882,16 @@ two_ham_rate_tot = output_formatter(two_h_one_a, trials, False)
 
 one_ham_reset = output_formatter((one_h_one_a + two_h_one_a), (one_hammer_total + two_hammer_total), False)
 two_ham_reset = output_formatter(two_h_one_a, two_hammer_total, False)
-no_ham_rate = output_formatter(no_h_one_a, anvils[1], True)
-one_ham_rate = output_formatter(one_h_one_a, anvils[1], True)
-two_ham_rate = output_formatter(two_h_one_a, anvils[1], True)
-sub_115_df = output_formatter(np.count_nonzero(sub_115), anvils[1], False)
-sub_100_df = output_formatter(np.count_nonzero(sub_100), anvils[1], False)
+no_ham_rate = output_formatter(no_h_one_a, one_anvils, True)
+one_ham_rate = output_formatter(one_h_one_a, one_anvils, True)
+two_ham_rate = output_formatter(two_h_one_a, one_anvils, True)
+sub_115_df = output_formatter(sub_115, one_anvils, True)
+sub_100_df = output_formatter(sub_100, one_anvils, True)
 
 table_dataframe = pd.DataFrame({('trials = ' + str(trials)): ['no anvil', 'one anvil', 'two anvil', 'three or more'],
                                 'total, % total': [no_anvil_num, one_anvil_num, two_anvil_num, three_anvil_num],
-                                'sub 1:15 %': ['N/A', sub_115_df, '0', '0'],
-                                'sub 1:00 %': ['N/A', sub_100_df, '0', '0']})
+                                'total, sub 1:15 %': ['N/A', sub_115_df, '0', '0'],
+                                'total, sub 1:00 %': ['N/A', sub_100_df, '0', '0']})
 table_dataframe2 = pd.DataFrame({('trials = ' + str(trials)): ['no hammer', 'one hammer', 'two hammer'],
                                  'total, % of 1 anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
                                  '% of total trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
@@ -977,7 +950,6 @@ mpl_table2.auto_set_font_size(False)
 mpl_table2.set_fontsize(9)
 ax2.axis(False)
 
-tick_times_one_anvil[:] = [x for x in tick_times if x <= 150]
 
 n = pd.Series(np.random.randn(trials))
 first_q1 = float(np.quantile(n, .25))
@@ -992,15 +964,16 @@ iqr_second = second_q3 - second_q1
 bin_width_second = (2 * iqr_second) / ((len(m)) ** (1. / 3.))
 bin_number_second = int(np.ceil((m.max() - m.min()) / bin_width_second))
 
-cumulative_total_graph = sns.kdeplot(tick_times_raw, x=tick_times_raw, cumulative=True, common_norm=False, common_grid=True,
-                           legend=True, color='crimson')
-empirical_total_graph = sns.ecdfplot(tick_times_raw, x=tick_times_raw, legend=True, color='green')
+
+cumulative_total_graph = sns.kdeplot(tick_times_df, x='tick_times', cumulative=True, common_norm=False,
+                                     common_grid=True, legend=True, color='crimson')
+empirical_total_graph = sns.ecdfplot(tick_times_df, x='tick_times', legend=True, color='green')
 data_x, data_y = cumulative_total_graph.lines[0].get_data()
 yi = .99
 xi = np.interp(yi, data_y, data_x)
-cumulative_total_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi), yticks=(np.arange(0, 1.1, step=.1)), ylim=(0, 1),
-                 ylabel='probability of killing tekton', xlabel='time of encounter in ticks',
-                 title='cumulative probability of killing tekton')
+cumulative_total_graph.set(xticks=(np.arange(0, 1400, step=25)), xlim=(0, xi), yticks=(np.arange(0, 1.1, step=.1)),
+                           ylim=(0, 1), ylabel='probability of killing tekton', xlabel='time of encounter in ticks',
+                           title='cumulative probability of killing tekton')
 cumulative_total_graph.set_xticklabels(cumulative_total_graph.get_xticklabels(), rotation=45)
 aux_axis_cumulative = cumulative_total_graph.twiny()
 sns.kdeplot(ax=aux_axis_cumulative, bins=80)
@@ -1029,8 +1002,8 @@ total_sample_main_plot_aux_xaxis.set(xticks=(np.arange(75, (np.max(tick_times)),
 total_sample_main_plot_aux_xaxis_labels = np.arange(75, (np.max(tick_times)), step=25)
 total_sample_main_plot_aux_xaxis.set_xticklabels(minutes_list_big_step[3:(len(total_sample_main_plot_aux_xaxis_labels) + 3)])
 total_sample_main_plot.set(ylabel='probability density', xlabel='time of encounter in ticks',
-        title='tekton density histogram of ' + p.number_to_words(trials) + ' trials', xticks=total_sample_main_plot_xticks,
-        xlim=(75, (np.max(tick_times))))
+                           title='tekton density histogram of ' + p.number_to_words(trials) + ' trials',
+                           xticks=total_sample_main_plot_xticks, xlim=(75, (np.max(tick_times))))
 total_sample_main_plot.locator_params(nbins=22, axis='y')
 total_sample_aux_plot.locator_params(nbins=22, axis='y')
 total_sample_aux_plot.yaxis.set_label_position('right')
@@ -1040,16 +1013,17 @@ total_sample_aux_plot.yaxis.grid(True, color='black')
 total_sample_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
 
 # under one anvil graph
-n, bins, pathces = one_anvil_main_plot.hist(tick_times_one_anvil, bins=bin_number_second, density=True, edgecolor='black', linewidth=.8)
-nt, binst, pathcest = one_anvil_aux_plot.hist(tick_times_one_anvil, bins=bin_number_second, density=False, edgecolor='black',
-                                linewidth=.8, alpha=0)
+n, bins, pathces = one_anvil_main_plot.hist(tick_times_one_anvil, bins=bin_number_second, density=True,
+                                            edgecolor='black', linewidth=.8)
+nt, binst, pathcest = one_anvil_aux_plot.hist(tick_times_one_anvil, bins=bin_number_second, density=False,
+                                              edgecolor='black', linewidth=.8, alpha=0)
 
 one_anvil_aux_plot.xaxis.set_visible(False)
 one_anvil_aux_plot.set(ylabel='number of one anvils')
 one_anvil_aux_plot.yaxis.tick_right()
 one_anvil_aux_plot.yaxis.set_label_position('right')
-mu = np.mean(tick_times_one_anvil)
-sigma = statistics.stdev(tick_times_one_anvil)
+mu = np.mean(tick_times_one_anvil['tick_times'])
+sigma = statistics.stdev(tick_times_one_anvil['tick_times'])
 y = ((1 / (np.sqrt(2 * np.pi) * sigma)) * np.exp(-0.5 * (1 / sigma * (bins - mu)) ** 2))
 one_anvil_main_plot.plot(bins, y)
 one_anvil_main_plot_xticks = (np.arange(75, 165, step=5))
@@ -1099,6 +1073,7 @@ plt.show()
 # is also bloated but tried before with little success
 # def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
 
-#redo how hammers are logged using the dataframe to avoid missing entries same with anvils
+
+#find likelihood of one anvil based on hp value using ML library
 
 #maybe add short lure option
