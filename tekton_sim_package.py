@@ -17,19 +17,19 @@ import sys
 import os
 
 
-
 trials = 10000
 root = tk.Tk()
 module_time = datetime.now()
 initialization_time = module_time - selection_time
 root.title('Tekton Sim Version 1.6')
-root.geometry('280x205')
+root.geometry('280x240')
 five_tick_only_check = tk.BooleanVar()
 cm_check = tk.BooleanVar()
 inq_check = tk.BooleanVar()
 fang_check = tk.BooleanVar()
-b_ring_check = tk.BooleanVar()
-brim_check = tk.BooleanVar()
+b_ring_check = False
+brim_check = False
+ultor_check = False
 feros_check = tk.BooleanVar()
 tort_check = tk.BooleanVar()
 lightbearer_check = tk.BooleanVar()
@@ -42,6 +42,7 @@ check_var15 = tk.BooleanVar()
 book_of_water_check = tk.BooleanVar()
 veng_camp_check = tk.BooleanVar()
 sql_import = tk.BooleanVar()
+ring_selector = tk.StringVar()
 
 desired_width = 350
 pd.set_option('display.width', desired_width)
@@ -89,14 +90,6 @@ def check_correction_temp4():
     return check_correction_new('4')
 
 
-def check_correction():
-    if b_ring_check.get():
-        if brim_check.get():
-            return C6.toggle()
-        else:
-            return
-
-
 def fang_checker_lb():
     while not fang_check.get():
         return C9.toggle()
@@ -127,17 +120,15 @@ def check_correction_new(num):
 
 def spec_ring():
     if fang_check.get():
+        if lightbearer_check.get():
+            ring_selector.set('lightbearer')
+            ring_menu.config(state='disabled')
+        else:
+            ring_selector.set('Select Ring')
+            ring_menu.config(state='normal')
         return
     else:
         C9.deselect()
-
-
-def check_correction2():
-    if brim_check.get():
-        if b_ring_check.get():
-            return C5.toggle()
-        else:
-            return
 
 
 def check_correction_veng():
@@ -156,6 +147,17 @@ def check_correction_veng2():
             return
 
 
+def show():
+    tk.Label(text=ring_selector.get())
+
+
+options = ["Select Ring", "b_ring", "brim", "ultor_ring"]
+
+ring_selector.set("Select Ring")
+
+ring_menu = tk.OptionMenu(root, ring_selector, *options)
+ring_menu.place(x=175, y=205)
+
 string_variable = tk.StringVar()
 C1 = tk.Checkbutton(root, text="five tick only", variable=five_tick_only_check, onvalue=1, offvalue=0)
 C1.place(x=25, y=80)
@@ -167,10 +169,6 @@ C3.place(x=75, y=55)
 C3.toggle()
 C4 = tk.Checkbutton(root, text="fang", variable=fang_check, onvalue=1, offvalue=0)
 C4.place(x=140, y=130)
-C5 = tk.Checkbutton(root, text="b ring", variable=b_ring_check, onvalue=1, offvalue=0, command=check_correction)
-C5.place(x=75, y=155)
-C6 = tk.Checkbutton(root, text="brim", variable=brim_check, onvalue=1, offvalue=0, command=check_correction2)
-C6.place(x=25, y=155)
 C7 = tk.Checkbutton(root, text="feros", variable=feros_check, onvalue=1, offvalue=0)
 C7.place(x=75, y=130)
 C8 = tk.Checkbutton(root, text="tort", variable=tort_check, onvalue=1, offvalue=0)
@@ -200,6 +198,7 @@ C17.place(x=190, y=80)
 C18 = tk.Checkbutton(root, text="import to SQL", variable=sql_import, onvalue=1, offvalue=0)
 C18.place(x=180, y=180)
 
+
 trials_text = tk.Label(root, textvariable=string_variable)
 trials_text.place(x=30, y=10)
 notif_text = tk.Label(root, text='lb is for fang spec only')
@@ -207,15 +206,23 @@ notif_text.place(x=30, y=110)
 exit_button = tk.Button(root, text="Exit", command=abort)
 exit_button.place(x=230, y=0)
 button_submit = tk.Button(root, text="Submit", command=root.destroy)
-button_submit.place(x=100, y=180)
+button_submit.place(x=100, y=210)
 root.mainloop()
 
-checkbuttons_list = [('cm', cm_check.get()), ('inq', inq_check.get()), ('five_tick_only', five_tick_only_check.get()),
-                     ('fang', fang_check.get()), ('b_ring', b_ring_check.get()), ('brim', brim_check.get()),
-                     ('feros', feros_check.get()), ('tort', tort_check.get()), ('lightbearer', lightbearer_check.get()),
-                     ('preveng', prevenge_check.get()), ('veng_camp', veng_camp_check.get()),
-                     ('vuln', vuln_check.get()), ('book_of_water', book_of_water_check.get())]
 
+if ring_selector.get() == 'b_ring':
+    b_ring_check = True
+elif ring_selector.get() == 'brim':
+    brim_check = True
+elif ring_selector.get() == 'ultor_ring':
+    ultor_check = True
+
+checkbuttons_list = [('cm', cm_check.get()), ('inq', inq_check.get()), ('five_tick_only', five_tick_only_check.get()),
+                     ('fang', fang_check.get()), ('b_ring', b_ring_check), ('brim', brim_check),
+                     ('ultor_ring', ultor_check), ('feros', feros_check.get()), ('tort', tort_check.get()),
+                     ('lightbearer', lightbearer_check.get()), ('preveng', prevenge_check.get()),
+                     ('veng_camp', veng_camp_check.get()), ('vuln', vuln_check.get()),
+                     ('book_of_water', book_of_water_check.get())]
 
 
 start_time = datetime.now()
@@ -228,13 +235,16 @@ if fang:
     scythe = False
 else:
     scythe = True
-lightbearer_equipped = lightbearer_check.get()
+
+
 print('inq:', inq)
 print('cm:', cm)
 print('fang:', fang)
 print('five tick only:', five_only)
-print('b ring:', b_ring_check.get())
-print('brim ring:', brim_check.get())
+print('ring selected: ', ring_selector.get())
+print('b ring:', b_ring_check)
+print('brim ring:', brim_check)
+print('ultor ring:', ultor_check)
 print('tort:', tort_check.get())
 print('feros:', feros_check.get())
 print('vuln', vuln_check.get())
@@ -313,11 +323,9 @@ class Gear:
 def gear_selection():
     attack_gear = 0
     strength_gear = 0
-    if b_ring_check.get():
-        strength_gear += 8
-    if brim_check.get():
-        attack_gear += 4
-        strength_gear += 4
+    ring_stats = {'None': (0, 0), 'b_ring': (0, 8), 'brim': (4, 4), 'ultor_ring': (0, 12)}
+    attack_gear += ring_stats[ring_selector.get()][0]
+    strength_gear += ring_stats[ring_selector.get()][1]
     if tort_check.get():
         attack_gear += 5
         strength_gear += 2
@@ -451,7 +459,7 @@ def attack_roll(spec_attack, four_tick, five_tick, multiplier):
         max_attack_roll_basic = int(effective_spec_attack_lvl * (attack_selector() + 64))
     else:
         max_attack_roll_basic = int(effective_attack_lvl * (attack_selector() + 64))
-    if lightbearer_equipped:
+    if lightbearer_check.get():
         if fang:
             max_attack_roll = int(max_attack_roll_basic * multiplier)
         else:
@@ -690,7 +698,7 @@ def pre_anvil():
 
 
 def can_i_spec():
-    if lightbearer_equipped:
+    if lightbearer_check.get():
         hit_metrics.fang_spec_status = True
         return hit_metrics.fang_spec_status
     else:
@@ -781,13 +789,13 @@ for x in range(trials):
         anvil_adjustment()
         hit_metrics.hp_pool += 44
         min_regen()
-        post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
+        post_anvil(fang_lb_spec=lightbearer_check.get(), spec_alternation=hit_metrics.fang_spec_status)
         veng_applicator(False, veng_camp_check.get())
         anvil_adjustment()
         min_regen()
         while True:
             if tekton.hp > 0:
-                post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
+                post_anvil(fang_lb_spec=lightbearer_check.get(), spec_alternation=hit_metrics.fang_spec_status)
                 veng_applicator(False, veng_camp_check.get())
                 anvil_adjustment()
                 min_regen()
@@ -803,13 +811,13 @@ for x in range(trials):
         anvil_adjustment()
         hit_metrics.hp_pool += 44
         min_regen()
-        post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
+        post_anvil(fang_lb_spec=lightbearer_check.get(), spec_alternation=hit_metrics.fang_spec_status)
         veng_applicator(False, veng_camp_check.get())
         anvil_adjustment()
         min_regen()
         while True:
             if tekton.hp > 0:
-                post_anvil(fang_lb_spec=lightbearer_equipped, spec_alternation=hit_metrics.fang_spec_status)
+                post_anvil(fang_lb_spec=lightbearer_check.get(), spec_alternation=hit_metrics.fang_spec_status)
                 veng_applicator(False, veng_camp_check.get())
                 anvil_adjustment()
                 min_regen()
