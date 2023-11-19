@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import scipy.stats as stats
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 import sys
 import os
@@ -218,11 +218,11 @@ elif ring_selector.get() == 'ultor_ring':
     ultor_check = True
 
 checkbuttons_list = [('cm', cm_check.get()), ('inq', inq_check.get()), ('five_tick_only', five_tick_only_check.get()),
-                     ('fang', fang_check.get()), ('b_ring', b_ring_check), ('brim', brim_check),
-                     ('ultor_ring', ultor_check), ('feros', feros_check.get()), ('tort', tort_check.get()),
-                     ('lightbearer', lightbearer_check.get()), ('preveng', prevenge_check.get()),
+                     ('fang', fang_check.get()), ('feros', feros_check.get()), ('tort', tort_check.get()),
+                     ('preveng', prevenge_check.get()),
                      ('veng_camp', veng_camp_check.get()), ('vuln', vuln_check.get()),
                      ('book_of_water', book_of_water_check.get())]
+ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get())]
 
 
 start_time = datetime.now()
@@ -282,6 +282,7 @@ if sql_import.get():
     connection_string = r"Driver={ODBC Driver 17 for SQL Server}; Server=DESKTOP-3TJHN4P\MSSQLSERVER01; Database=tekton_sim_data; Trusted_Connection=yes;"
     connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
     engine = create_engine(connection_url)
+    conn_id = engine.connect()
     conn = engine.connect()
 
 
@@ -833,18 +834,34 @@ p = inflect.engine()
 
 results_df = pd.DataFrame(list(zip(tick_times, anvil_count_list, hammer_count_list, hp_check_list)),
                           columns=['tick_times', 'anvil_count', 'hammer_count', 'hp_after_pre_anvil'])
+
 for name, gear_val in checkbuttons_list:
     if gear_val:
         results_df[name] = 1
     else:
         results_df[name] = 0
-print(results_df)
+ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get())]
+ring_name = ['b_ring', 'brim', 'ultor_ring', 'lightbearer']
+for name, gear_val in ring_list:
+    if not gear_val:
+        continue
+    else:
+        results_df['ring'] = name
+if results_df['ring'].all() != any(ring_name):
+    results_df['ring'] = None
 
+print(results_df)
+import_df = results_df.copy()
 if sql_import.get():
     temp = input('port to sql?')
     if temp == 'y':
+        max_id = conn_id.execute(text("""SELECT max(ID)
+                        FROM tekton_results""")).first()[0]
+        conn_id.close()
+        import_df.index += max_id + 1
+        print(import_df)
         # noinspection PyUnboundLocalVariable
-        results_df.to_sql('tekton_results', con=conn, if_exists='append', index=False)
+        import_df.to_sql('tekton_results', con=conn, if_exists='append', index_label='ID')
 
 no_anvils = len(results_df[(results_df['anvil_count'] == 0)].copy())
 one_anvils = len(results_df[(results_df['anvil_count'] == 1)].copy())
@@ -883,7 +900,6 @@ no_anvil_num = output_formatter(no_anvils, trials, True)
 one_anvil_num = output_formatter(one_anvils, trials, True)
 two_anvil_num = output_formatter(two_anvils, trials, True)
 three_anvil_num = output_formatter(three_or_more_anvils, trials, True)
-temp1 = p.number_to_words(trials)
 no_ham_rate_tot = output_formatter(no_h_one_a, trials, False)
 one_ham_rate_tot = output_formatter(one_h_one_a, trials, False)
 two_ham_rate_tot = output_formatter(two_h_one_a, trials, False)
