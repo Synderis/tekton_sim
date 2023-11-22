@@ -27,6 +27,7 @@ five_tick_only_check = tk.BooleanVar()
 cm_check = tk.BooleanVar()
 inq_check = tk.BooleanVar()
 fang_check = tk.BooleanVar()
+no_ring = False
 b_ring_check = False
 brim_check = False
 ultor_check = False
@@ -216,13 +217,15 @@ elif ring_selector.get() == 'brim':
     brim_check = True
 elif ring_selector.get() == 'ultor_ring':
     ultor_check = True
+else:
+    no_ring = True
 
 checkbuttons_list = [('cm', cm_check.get()), ('inq', inq_check.get()), ('five_tick_only', five_tick_only_check.get()),
                      ('fang', fang_check.get()), ('feros', feros_check.get()), ('tort', tort_check.get()),
                      ('preveng', prevenge_check.get()),
                      ('veng_camp', veng_camp_check.get()), ('vuln', vuln_check.get()),
                      ('book_of_water', book_of_water_check.get())]
-ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get())]
+ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get()), ('Select Ring', no_ring)]
 
 
 start_time = datetime.now()
@@ -324,7 +327,7 @@ class Gear:
 def gear_selection():
     attack_gear = 0
     strength_gear = 0
-    ring_stats = {'None': (0, 0), 'b_ring': (0, 8), 'brim': (4, 4), 'ultor_ring': (0, 12)}
+    ring_stats = {'Select Ring': (0, 0), 'b_ring': (0, 8), 'brim': (4, 4), 'ultor_ring': (0, 12)}
     attack_gear += ring_stats[ring_selector.get()][0]
     strength_gear += ring_stats[ring_selector.get()][1]
     if tort_check.get():
@@ -840,7 +843,7 @@ for name, gear_val in checkbuttons_list:
         results_df[name] = 1
     else:
         results_df[name] = 0
-ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get())]
+ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get()), ('Select Ring', no_ring)]
 ring_name = ['b_ring', 'brim', 'ultor_ring', 'lightbearer']
 for name, gear_val in ring_list:
     if not gear_val:
@@ -920,19 +923,19 @@ table_dataframe2 = pd.DataFrame({('trials = ' + str(trials)): ['no hammer', 'one
                                  'total, % of 1 anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
                                  '% of total trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
                                  ('1 anvil ham. ' + r'$\subset$' + ' total ham.'): ['N/A', (str(one_ham_reset) + ' 1 & 2 Ham.'), (str(two_ham_reset) + ' 2 ham. only')]})
-minutes_list = [' 0:45', ' 0:48', ' 0:51', ' 0:54', ' 0:57', ' 1:00', ' 1:03', ' 1:06', ' 1:09', ' 1:12', ' 1:15',
-                ' 1:18', ' 1:21', ' 1:24', ' 1:27', ' 1:30', ' 1:33', ' 1:36', ' 1:39', ' 1:42', ' 1:45', ' 1:48',
-                ' 1:51', ' 1:54', ' 1:57', ' 2:00', ' 2:03', ' 2:06', ' 2:09', ' 2:12', ' 2:15', ' 2:18', ' 2:21',
-                ' 2:24', ' 2:27', ' 2:30', ' 2:33', ' 2:36', ' 2:39', ' 2:42', ' 2:45', ' 2:48']
-minutes_list_big_step = [' 0:00', ' 0:15', ' 0:30', ' 0:45', ' 1:00', ' 1:15', ' 1:30', ' 1:45', ' 2:00', ' 2:15',
-                         ' 2:30', ' 2:45', ' 3:00', ' 3:15', ' 3:30', ' 3:45', ' 4:00', ' 4:15', ' 4:30', ' 4:45',
-                         ' 5:00', ' 5:15', ' 5:30', ' 5:45', ' 6:00', ' 6:15', ' 6:30', ' 6:45', ' 7:00', ' 7:15',
-                         ' 7:30', ' 7:45', ' 8:00', ' 8:15', ' 8:30', ' 8:45', ' 9:00', ' 9:15', ' 9:30', ' 9:45',
+minutes_list = ['0:45', '0:48', '0:51', '0:54', '0:57', '1:00', '1:03', '1:06', '1:09', '1:12', '1:15',
+                '1:18', '1:21', '1:24', '1:27', '1:30', '1:33', '1:36', '1:39', '1:42', '1:45', '1:48',
+                '1:51', '1:54', '1:57', '2:00', '2:03', '2:06', '2:09', '2:12', '2:15', '2:18', '2:21',
+                '2:24', '2:27', '2:30', '2:33', '2:36', '2:39', '2:42', '2:45', '2:48']
+minutes_list_big_step = ['0:00', '0:15', '0:30', '0:45', '1:00', '1:15', '1:30', '1:45', '2:00', '2:15',
+                         '2:30', '2:45', '3:00', '3:15', '3:30', '3:45', '4:00', '4:15', '4:30', '4:45',
+                         '5:00', '5:15', '5:30', '5:45', '6:00', '6:15', '6:30', '6:45', '7:00', '7:15',
+                         '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45',
                          '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15',
                          '12:30', '12:45', '13:00', '13:15', '13:30', '13:45']
-minutes_list_bigger_step = [' 0:00', ' 0:25', ' 0:50', ' 1:15', ' 1:40', ' 2:05', ' 2:30', ' 2:55', ' 3:20', ' 3:45',
-                            ' 4:10', ' 4:35', ' 5:00', ' 5:25', ' 5:50', ' 6:15', ' 6:40', ' 7:05', ' 7:30', ' 7:55',
-                            ' 8:20', ' 8:45', ' 9:10', ' 9:35', '10:00', '10:25', '10:50', '11:15', '11:40', '12:05',
+minutes_list_bigger_step = ['0:00', '0:25', '0:50', '1:15', '1:40', '2:05', '2:30', '2:55', '3:20', '3:45',
+                            '4:10', '4:35', '5:00', '5:25', '5:50', '6:15', '6:40', '7:05', '7:30', '7:55',
+                            '8:20', '8:45', '9:10', '9:35', '10:00', '10:25', '10:50', '11:15', '11:40', '12:05',
                             '12:30', '12:55', '13:20', '13:45']
 
 
@@ -950,26 +953,27 @@ fig = plt.figure()
 gs = fig.add_gridspec(3, 2)
 ax1 = fig.add_subplot(gs[0, 0])
 ax2 = fig.add_subplot(gs[1, 0])
-total_sample_aux_plot = fig.add_subplot(gs[2, 1])
+# total_sample_aux_plot = fig.add_subplot(gs[2, 1])
 total_sample_main_plot = fig.add_subplot(gs[2, 1])
-one_anvil_aux_plot = fig.add_subplot(gs[0, 1])
+# one_anvil_aux_plot = fig.add_subplot(gs[0, 1])
 one_anvil_main_plot = fig.add_subplot(gs[0, 1])
 ax4t = fig.add_subplot(gs[2, 0])
 ax4 = fig.add_subplot(gs[2, 0])
+# total_sample_main_plot.axes.set_visible(False)
 ax4t.axes.set_visible(False)
 xd = ['gray', 'gray', 'gray', 'gray']
 silver = ["silver", "silver", "silver", "silver"]
-colors = [silver, silver, silver, silver]
+colors_list = [silver, silver, silver, silver]
 mpl_table = ax1.table(cellText=table_dataframe.values,
                       colLabels=table_dataframe.columns, cellLoc='center', rowLoc='center', loc='upper right',
-                      cellColours=colors, colColours=xd)
+                      cellColours=colors_list, colColours=xd)
 mpl_table.auto_set_font_size(False)
 ax1.axis(False)
 mpl_table.set_fontsize(9)
 
 mpl_table2 = ax2.table(cellText=table_dataframe2.values,
                        colLabels=table_dataframe2.columns, cellLoc='center', rowLoc='center', loc='upper right',
-                       cellColours=colors[0:3], colColours=xd)
+                       cellColours=colors_list[0:3], colColours=xd)
 mpl_table2.auto_set_font_size(False)
 mpl_table2.set_fontsize(9)
 ax2.axis(False)
@@ -1007,69 +1011,68 @@ aux_axis_cumulative.set_xticklabels(minutes_list_bigger_step, rotation=45)
 cumulative_total_graph.grid('visible', color='black')
 
 # total histogram graph
-n2t, bins2t, pathces2t = total_sample_aux_plot.hist(tick_times, bins=bin_number, density=False, alpha=0)
-n2, bins2, pathces2 = total_sample_main_plot.hist(tick_times, bins=bin_number, density=True, edgecolor='black', linewidth=.8)
 
-total_sample_aux_plot.set(ylabel='number of killed tektons in sample')
-mu2 = np.mean(tick_times)
-sigma2 = statistics.stdev(tick_times)
-y2 = ((1 / (np.sqrt(2 * np.pi) * sigma2)) * np.exp(-0.5 * (1 / sigma2 * (bins2 - mu2)) ** 2))
-total_sample_main_plot.plot(bins2, y2)
+with sns.axes_style(style='ticks', rc={'ytick.left': True}):
+    sns.histplot(tick_times, bins=bin_number, ax=total_sample_main_plot, color='orange', alpha=1, edgecolor='k', linewidth=1)
+
+total_sample_main_plot_aux_axis = total_sample_main_plot.twinx()
+
+sns.kdeplot(tick_times,  ax=total_sample_main_plot_aux_axis, color='crimson')
+
 total_sample_main_plot_xticks = (np.arange(75, (np.max(tick_times) + 25), step=25))
 total_sample_main_plot.xaxis.set_tick_params(rotation=45)
-total_sample_aux_plot.yaxis.tick_right()
+total_sample_main_plot_aux_axis.set(ylabel='Probability density')
+total_sample_main_plot.set(ylabel='number of killed tektons in sample')
 total_sample_main_plot_aux_xaxis = total_sample_main_plot.secondary_xaxis('top')
-total_sample_aux_plot.xaxis.set_visible(False)
-total_sample_aux_plot.spines.top.set_visible(False)
 total_sample_main_plot_aux_xaxis.xaxis.set_tick_params(rotation=45)
 total_sample_main_plot_aux_xaxis.set(xticks=(np.arange(75, (np.max(tick_times)), step=25)), xlim=(75, (np.max(tick_times))))
 total_sample_main_plot_aux_xaxis_labels = np.arange(75, (np.max(tick_times)), step=25)
 total_sample_main_plot_aux_xaxis.set_xticklabels(minutes_list_big_step[3:(len(total_sample_main_plot_aux_xaxis_labels) + 3)])
-total_sample_main_plot.set(ylabel='probability density', xlabel='time of encounter in ticks',
-                           title='tekton density histogram of ' + p.number_to_words(trials) + ' trials',
+total_sample_main_plot.set(title='tekton density histogram of ' + p.number_to_words(trials) + ' trials',
                            xticks=total_sample_main_plot_xticks, xlim=(75, (np.max(tick_times))))
 total_sample_main_plot.locator_params(nbins=22, axis='y')
-total_sample_aux_plot.locator_params(nbins=22, axis='y')
-total_sample_aux_plot.yaxis.set_label_position('right')
+total_sample_main_plot_aux_axis.locator_params(nbins=22, axis='y')
+total_sample_main_plot.set_xlabel('time of encounter in ticks')
+total_sample_main_plot_aux_xaxis.set_xlabel('time of encounter in minutes:seconds')
 total_sample_main_plot.xaxis.grid(True, color='black')
+total_sample_main_plot.yaxis.grid(True, color='black')
 total_sample_main_plot.set_axisbelow(True)
-total_sample_aux_plot.yaxis.grid(True, color='black')
-total_sample_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
+# total_sample_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
 
 # under one anvil graph
-n, bins, pathces = one_anvil_main_plot.hist(tick_times_one_anvil, bins=bin_number_second, density=True,
-                                            edgecolor='black', linewidth=.8)
-nt, binst, pathcest = one_anvil_aux_plot.hist(tick_times_one_anvil, bins=bin_number_second, density=False,
-                                              edgecolor='black', linewidth=.8, alpha=0)
+with sns.axes_style(style='ticks', rc={'ytick.left': True}):
+    sns.histplot(tick_times_one_anvil, bins=bin_number_second, ax=one_anvil_main_plot, palette=['orange'], alpha=1, legend=False, edgecolor='k', linewidth=1)
 
-one_anvil_aux_plot.xaxis.set_visible(False)
-one_anvil_aux_plot.set(ylabel='number of one anvils')
-one_anvil_aux_plot.yaxis.tick_right()
-one_anvil_aux_plot.yaxis.set_label_position('right')
-mu = np.mean(tick_times_one_anvil['tick_times'])
-sigma = statistics.stdev(tick_times_one_anvil['tick_times'])
-y = ((1 / (np.sqrt(2 * np.pi) * sigma)) * np.exp(-0.5 * (1 / sigma * (bins - mu)) ** 2))
-one_anvil_main_plot.plot(bins, y)
-one_anvil_main_plot_xticks = (np.arange(75, 165, step=5))
-one_anvil_main_plot.set(xticks=one_anvil_main_plot_xticks,
-        xlim=(75, 160), xlabel='time of encounter in ticks', ylabel='Probability density',
-        title='number of tektons under one anvil in ' + p.number_to_words(trials) + ' trials')
-one_anvil_main_plot.locator_params(nbins=22, axis='y')
-one_anvil_aux_plot.locator_params(nbins=22, axis='y')
+one_anvil_main_plot_aux_axis = one_anvil_main_plot.twinx()
+sns.kdeplot(tick_times_one_anvil, palette=['r'],  ax=one_anvil_main_plot_aux_axis, legend=False)
+
 one_anvil_main_plot.xaxis.set_tick_params(rotation=45)
+one_anvil_main_plot_aux_axis.set(ylabel='Probability density')
+one_anvil_main_plot.set(ylabel='number of killed tektons in sample')
 one_anvil_main_plot_aux_xaxis = one_anvil_main_plot.secondary_xaxis('top')
-one_anvil_aux_plot.spines.top.set_visible(False)
-one_anvil_main_plot.spines.top.set_visible(False)
+one_anvil_main_plot_aux_xaxis.xaxis.set_tick_params(rotation=45)
+
+one_anvil_main_plot_xticks = (np.arange(75, 165, step=5))
+one_anvil_main_plot.set(xticks=one_anvil_main_plot_xticks, xlim=(75, 160),
+                        title='number of tektons under one anvil in ' + p.number_to_words(trials) + ' trials')
+one_anvil_main_plot.locator_params(nbins=22, axis='y')
+one_anvil_main_plot.set_xlabel('time of encounter in ticks')
+one_anvil_main_plot_aux_xaxis.set_xlabel('time of encounter in minutes:seconds')
+one_anvil_main_plot_aux_axis.locator_params(nbins=22, axis='y')
+one_anvil_main_plot.xaxis.set_tick_params(rotation=45)
+
+
 one_anvil_main_plot_aux_xaxis.set(xticks=(np.arange(75, 165, step=5)), xlim=(75, 160))
 one_anvil_main_plot_aux_xaxis.set_xticklabels(minutes_list[:18])
 one_anvil_main_plot_aux_xaxis.xaxis.set_tick_params(rotation=45)
 one_anvil_main_plot.xaxis.grid(True, color='black')
+one_anvil_main_plot.yaxis.grid(True, color='black')
 one_anvil_main_plot.set_axisbelow(True)
 
-one_anvil_aux_plot.yaxis.grid(True, color='black')
+
 plt.subplots_adjust(wspace=.25, hspace=0, right=.93, left=0.05, top=.90, bottom=.07)
 print('script completed in', datetime.now() - (start_time - initialization_time), 'seconds')
-one_anvil_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
+# one_anvil_main_plot.set_facecolor((0.0, 0.0, 0.0, 0.0))
 
 plt.show()
 
