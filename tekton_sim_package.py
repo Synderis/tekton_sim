@@ -675,10 +675,6 @@ def pre_anvil():
         for four_num, five_num in [(3, 1), (1, 2)]:
             four_tick_hit(four_num, False)
             five_tick_hit(five_num, False, False)
-        # four_tick_hit(3, False)
-        # five_tick_hit(1, False, False)
-        # four_tick_hit(1, False)
-        # five_tick_hit(2, False, False)
     else:
         spec_hit(False)
         hammer_check()
