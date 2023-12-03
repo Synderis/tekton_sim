@@ -44,6 +44,7 @@ book_of_water_check = tk.BooleanVar()
 veng_camp_check = tk.BooleanVar()
 sql_import = tk.BooleanVar()
 ring_selector = tk.StringVar()
+short_lure = tk.BooleanVar()
 
 desired_width = 350
 pd.set_option('display.width', desired_width)
@@ -78,6 +79,16 @@ def trials_selection():
 def fang_checker_lb():
     while not fang_check.get():
         return C9.toggle()
+
+
+def short_lure_resolver():
+    if short_lure.get():
+        return C1.deselect()
+
+
+def correct_lure():
+    if five_tick_only_check.get():
+        return C19.deselect()
 
 
 def check_correction_new(num):
@@ -144,7 +155,7 @@ ring_menu = tk.OptionMenu(root, ring_selector, *options)
 ring_menu.place(x=175, y=205)
 
 string_variable = tk.StringVar()
-C1 = tk.Checkbutton(root, text="five tick only", variable=five_tick_only_check, onvalue=1, offvalue=0)
+C1 = tk.Checkbutton(root, text="five tick only", variable=five_tick_only_check, onvalue=1, offvalue=0, command=correct_lure)
 C1.place(x=25, y=80)
 C2 = tk.Checkbutton(root, text="CM", variable=cm_check, onvalue=1, offvalue=0)
 C2.place(x=25, y=55)
@@ -177,11 +188,14 @@ C14 = tk.Checkbutton(root, text="vuln", variable=vuln_check, onvalue=1, offvalue
 C14.place(x=130, y=80)
 C14.toggle()
 C16 = tk.Checkbutton(root, text="vuln book", variable=book_of_water_check, onvalue=1, offvalue=0)
-C16.place(x=190, y=55)
+C16.place(x=190, y=80)
 C17 = tk.Checkbutton(root, text="veng camp", variable=veng_camp_check, onvalue=1, offvalue=0, command=check_correction_veng2)
-C17.place(x=190, y=80)
+C17.place(x=190, y=55)
 C18 = tk.Checkbutton(root, text="import to SQL", variable=sql_import, onvalue=1, offvalue=0)
 C18.place(x=180, y=180)
+C19 = tk.Checkbutton(root, text="short lure", variable=short_lure, onvalue=1, offvalue=0, command=short_lure_resolver)
+C19.place(x=25, y=155)
+
 
 
 trials_text = tk.Label(root, textvariable=string_variable)
@@ -208,7 +222,7 @@ checkbuttons_list = [('cm', cm_check.get()), ('inq', inq_check.get()), ('five_ti
                      ('fang', fang_check.get()), ('feros', feros_check.get()), ('tort', tort_check.get()),
                      ('preveng', prevenge_check.get()),
                      ('veng_camp', veng_camp_check.get()), ('vuln', vuln_check.get()),
-                     ('book_of_water', book_of_water_check.get())]
+                     ('book_of_water', book_of_water_check.get()), ('short_lure', short_lure.get())]
 ring_list = [('b_ring', b_ring_check), ('brim', brim_check), ('ultor_ring', ultor_check), ('lightbearer', lightbearer_check.get()), ('Select Ring', no_ring)]
 
 
@@ -285,11 +299,30 @@ class Offensive:
         self.hammer_hit_count = hammer_hit_count
         self.hp_pool = hp_pool
 
+    def drain_spec(self):
+        self.specced_last_anvil = True
+
+    def fang_switch(self):
+        if self.specced_last_anvil:
+            self.specced_last_anvil = False
+            self.fang_spec_status = False
+        else:
+            self.specced_last_anvil = True
+            if lightbearer_check.get():
+                self.fang_spec_status = True
+            else:
+                self.fang_spec_status = False
+
+    def fang_false_switcher(self):
+        if self.fang_spec_status:
+            self.fang_spec_status = False
+            self.drain_spec()
+
 
 # This is the block where gear is stored this will stay static throughout each trial.
 class Gear:
-    def __init__(self, dwh_att_bonus, dwh_str_bonus, four_tick_att_bonus, four_tick_str_bonus, five_tick_att_bonus, five_tick_str_bonus,
-                  gear_multiplier, static_crush_weapon, five_tick_weapon_style) :
+    def __init__(self, dwh_att_bonus, dwh_str_bonus, four_tick_att_bonus, four_tick_str_bonus, five_tick_att_bonus,
+                 five_tick_str_bonus, gear_multiplier, static_crush_weapon, five_tick_weapon_style):
         self.dwh_att_bonus = dwh_att_bonus
         self.dwh_str_bonus = dwh_str_bonus
         self.four_tick_att_bonus = four_tick_att_bonus
@@ -375,6 +408,12 @@ class NPC:
         if self.defence < 0:
             self.defence = 0
 
+    def enraged_switch_on(self):
+        self.stab_def, self.slash_def, self.crush_def = [280, 280, 180]
+
+    def enraged_switch_off(self):
+        self.stab_def, self.slash_def, self.crush_def = [155, 165, 105]
+
 
 # This damage value selection based on adjusted gear and whether the hit chance function determines a hit
 def hit_value_roll(attack_type, max_hit_modifier=1.0):
@@ -426,21 +465,21 @@ def attack_roll(attack_type, multiplier):
 
 
 # Function that will take the attack roll and defense roll and determine hit or miss of main damage phase
-def hit_chancer(attack_type, fang_spec_hit, status):
+def hit_chancer(attack_type):
     attack_roll_check = 0
-    def_roll_check = defence_roll(attack_type, status)
+    def_roll_check = defence_roll(attack_type)
     if attack_type == 'spec':
         attack_roll_check = attack_roll('spec', multiplier=1.0)
     elif attack_type == 'four_tick':
         attack_roll_check = attack_roll('four_tick', multiplier=1.0)
     elif attack_type == 'five_tick':
+        if hit_metrics.fang_spec_status:
+            multiplier_val = 1.5
+        else:
+            multiplier_val = 1.0
         if fang:
-            if fang_spec_hit:
-                attack_roll_check = attack_roll('five_tick', multiplier=1.5)
-                attack_roll_check2 = attack_roll('five_tick', multiplier=1.5)
-            else:
-                attack_roll_check = attack_roll('five_tick', multiplier=1.0)
-                attack_roll_check2 = attack_roll('five_tick', multiplier=1.0)
+            attack_roll_check = attack_roll('five_tick', multiplier=multiplier_val)
+            attack_roll_check2 = attack_roll('five_tick', multiplier=multiplier_val)
             roll_list = [attack_roll_check, attack_roll_check2]
             return True if any(i > def_roll_check for i in roll_list) else False
         else:
@@ -481,14 +520,14 @@ def hammer_missed():
 
 
 # Function that will take the attack roll and defense roll and determine hit or miss of specs for initial def reduction
-def spec_hit(status):
+def spec_hit():
     damage_val = hit_value_roll('spec')
     tekton.lower_hp(damage_val)
     tekton.lower_def(int((tekton.defence * .3)))
     adjust_def_integer()
     hit_metrics.hammer_hit_count += 1
-    defence_roll('spec', status)
-    if hit_chancer('spec', False, status):
+    defence_roll('spec')
+    if hit_chancer('spec'):
         damage_val = hit_value_roll('spec')
         tekton.lower_hp(damage_val)
         if damage_val > 0:
@@ -503,14 +542,14 @@ def spec_hit(status):
 
 
 # Function that will be called to indicate number of hits in damage phase for mace
-def four_tick_hit(instances, status):
+def four_tick_hit(instances):
     for _ in range(instances):
         if tekton.hp > 0:
             hit_metrics.four_tick_hit_counter += 1
         else:
             hit_metrics.four_tick_hit_counter += 0
-        defence_roll('four_tick', status)
-        if hit_chancer('four_tick', False, status):
+        defence_roll('four_tick')
+        if hit_chancer('four_tick'):
             damage_val = hit_value_roll('four_tick')
             tekton.lower_hp(damage_val)
         else:
@@ -519,8 +558,8 @@ def four_tick_hit(instances, status):
 
 
 # Function that will be called to make each scythe hit roll seperately for each of the 3 instances of dmg
-def scy_dmg(step_down, status):
-    if hit_chancer('five_tick', False, status):
+def scy_dmg(step_down):
+    if hit_chancer('five_tick'):
         damage_val = hit_value_roll('five_tick', max_hit_modifier=step_down)
         tekton.lower_hp(damage_val)
     else:
@@ -530,30 +569,27 @@ def scy_dmg(step_down, status):
 
 
 # Function that will be called to indicate number of hits in damage phase for 5 tick weapon
-def five_tick_hit(instances, status, fang_spec_pass_var):
+def five_tick_hit(instances):
     for _ in range(instances):
-        defence_roll('five_tick', status)
+        defence_roll('five_tick')
         if tekton.hp > 0:
             hit_metrics.five_tick_hit_counter += 1
+        if hit_metrics.fang_spec_status:
+            max_mod_val = 1
+        else:
+            max_mod_val = .85
         if fang:
-            if fang_spec_pass_var:
-                if hit_chancer('five_tick', fang_spec_pass_var, status):
-                    damage_val = hit_value_roll('five_tick', max_hit_modifier=1)
-                    tekton.lower_hp(damage_val)
-                else:
-                    damage_val = 0
-                    tekton.lower_hp(damage_val)
-            elif hit_chancer('five_tick', fang_spec_pass_var, status):
-                damage_val = hit_value_roll('five_tick', max_hit_modifier=.85)
+            if hit_chancer('five_tick'):
+                damage_val = hit_value_roll('five_tick', max_hit_modifier=max_mod_val)
                 tekton.lower_hp(damage_val)
             else:
                 damage_val = 0
                 tekton.lower_hp(damage_val)
         elif scythe:
             for i in [1, .5, .25]:
-                scy_dmg(i, status)
+                scy_dmg(i)
         else:
-            if hit_chancer('five_tick', False, status):
+            if hit_chancer('five_tick'):
                 damage_val = hit_value_roll('five_tick')
                 tekton.lower_hp(damage_val)
             else:
@@ -602,8 +638,11 @@ def veng_applicator(pre_veng, veng_camp):
 
 def anvil_adjustment():
     if tekton.hp > 0:
-        cycle_select = random.randint(3, 6)
-        hit_metrics.idle_time += ((cycle_select * 3) + 10)
+        if short_lure.get():
+            time_to_return = 6
+        else:
+            time_to_return = 10
+        hit_metrics.idle_time += ((random.randint(3, 6) * 3) + time_to_return)
     return
 
 
@@ -633,72 +672,46 @@ def time():
 
 def pre_anvil():
     if four_and_five:
-        spec_hit(False)
+        spec_hit()
+        hit_metrics.drain_spec()
         hammer_check()
         for four_num, five_num in [(3, 1), (1, 2)]:
-            four_tick_hit(four_num, False)
-            five_tick_hit(five_num, False, False)
+            four_tick_hit(four_num)
+            five_tick_hit(five_num)
     else:
-        spec_hit(False)
+        spec_hit()
         hammer_check()
-        five_tick_hit(6, False, False)
+        five_tick_hit(6)
     return
 
 
-def can_i_spec():
-    if lightbearer_check.get():
-        hit_metrics.fang_spec_status = True
-        return hit_metrics.fang_spec_status
-    else:
-        if hit_metrics.specced_last_anvil:
-            hit_metrics.fang_spec_status = False
-        else:
-            hit_metrics.fang_spec_status = True
-        return hit_metrics.fang_spec_status
-
-
-def post_anvil(fang_lb_spec, spec_alternation):
+def post_anvil():
     hit_metrics.phase += 1
     if four_and_five:
-        four_tick_hit(5, True)
-        if fang_lb_spec:
-            if spec_alternation:
-                five_tick_hit(1, False, True)
-                hit_metrics.specced_last_anvil = True
-                can_i_spec()
-            else:
-                five_tick_hit(1, False, False)
-                hit_metrics.specced_last_anvil = False
-                can_i_spec()
-            four_tick_hit(6, False)
+        tekton.enraged_switch_on()
+        four_tick_hit(5)
+        tekton.enraged_switch_off()
+        five_tick_hit(1)
+        if short_lure.get():
+            four_tick_hit(7)
         else:
-            four_tick_hit(6, False)
-            five_tick_hit(1, False, False)
-        four_tick_hit(2, False)
-        five_tick_hit(1, False, False)
+            four_tick_hit(8)
+        hit_metrics.fang_switch()
+        five_tick_hit(1)
+        hit_metrics.fang_false_switcher()
     else:
-        five_tick_hit(4, True, False)
-        if fang_lb_spec:
-            if spec_alternation:
-                five_tick_hit(1, False, True)
-                hit_metrics.specced_last_anvil = True
-                can_i_spec()
-            else:
-                five_tick_hit(1, False, False)
-                hit_metrics.specced_last_anvil = False
-                can_i_spec()
-            five_tick_hit(7, False, False)
-        else:
-            five_tick_hit(8, False, False)
+        tekton.enraged_switch_on()
+        five_tick_hit(4)
+        tekton.enraged_switch_off()
+        hit_metrics.fang_switch()
+        five_tick_hit(1)
+        hit_metrics.fang_false_switcher()
+        five_tick_hit(7)
     return
 
 
-def defence_roll(attack_type, enraged):
+def defence_roll(attack_type):
     test_weapon = ""
-    if enraged:
-        tekton.stab_def, tekton.slash_def, tekton.crush_def = [280, 280, 180]
-    else:
-        tekton.stab_def, tekton.slash_def, tekton.crush_def = [155, 165, 105]
     if attack_type == 'spec' or attack_type == 'four_tick':
         test_weapon = loadout.static_crush_weapon
     elif attack_type == 'five_tick':
@@ -710,7 +723,7 @@ def defence_roll(attack_type, enraged):
 
 
 for x in range(trials):
-    hit_metrics = Offensive(0, 0, time_parameter=0.0, phase=0, idle_time=0, fang_spec_status=True,
+    hit_metrics = Offensive(0, 0, time_parameter=0.0, phase=0, idle_time=0, fang_spec_status=False,
                             specced_last_anvil=False, hammer_missed_count=0, hammer_hit_count=0, hp_pool=121)
     if cm:
         tekton = NPC(450, 246, 155, 165, 105, veng_count=0)
@@ -731,7 +744,7 @@ for x in range(trials):
         min_regen()
         while True:
             if tekton.hp > 0:
-                post_anvil(fang_lb_spec=lightbearer_check.get(), spec_alternation=hit_metrics.fang_spec_status)
+                post_anvil()
                 veng_applicator(False, veng_camp_check.get())
                 anvil_adjustment()
                 min_regen()
@@ -749,7 +762,7 @@ for x in range(trials):
         min_regen()
         while True:
             if tekton.hp > 0:
-                post_anvil(fang_lb_spec=lightbearer_check.get(), spec_alternation=hit_metrics.fang_spec_status)
+                post_anvil()
                 veng_applicator(False, veng_camp_check.get())
                 anvil_adjustment()
                 min_regen()
@@ -789,7 +802,7 @@ if sql_import.get():
     if temp == 'y':
         max_id = conn_id.execute(text("""SELECT max(ID)
                         FROM tekton_results""")).first()[0]
-        if max_id == None:
+        if max_id is None:
             max_id = 0
         conn_id.close()
         import_df.index += max_id + 1
@@ -823,12 +836,14 @@ cum_cdf_raw = np.cumsum(data_, axis=0)
 sub_115 = len(results_df[(results_df['tick_times'] <= 125)].copy())
 sub_100 = len(results_df[(results_df['tick_times'] <= 100)].copy())
 
+
 def output_formatter(numerator, divisor, long):
     if long:
         output = f'{str(numerator)}, {str(round(((numerator / divisor) * 100), 2))}%'
     else:
         output = f'{str(round(((numerator / divisor) * 100), 2))}%'
     return output
+
 
 no_anvil_num = output_formatter(no_anvils, trials, True)
 one_anvil_num = output_formatter(one_anvils, trials, True)
