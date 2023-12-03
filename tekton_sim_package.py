@@ -288,19 +288,17 @@ class Offensive:
 
 # This is the block where gear is stored this will stay static throughout each trial.
 class Gear:
-    def __init__(self, dwh_att_bonus, dwh_str_bonus, four_tick_att_bonus, four_tick_str_bonus, fang_att_bonus,
-                 fang_str_bonus, scy_att_bonus, scy_str_bonus, gear_multiplier, static_crush_weapon, five_tick_weapon):
+    def __init__(self, dwh_att_bonus, dwh_str_bonus, four_tick_att_bonus, four_tick_str_bonus, five_tick_att_bonus, five_tick_str_bonus,
+                  gear_multiplier, static_crush_weapon, five_tick_weapon_style) :
         self.dwh_att_bonus = dwh_att_bonus
         self.dwh_str_bonus = dwh_str_bonus
         self.four_tick_att_bonus = four_tick_att_bonus
         self.four_tick_str_bonus = four_tick_str_bonus
-        self.fang_att_bonus = fang_att_bonus
-        self.fang_str_bonus = fang_str_bonus
-        self.scy_att_bonus = scy_att_bonus
-        self.scy_str_bonus = scy_str_bonus
+        self.five_tick_att_bonus = five_tick_att_bonus
+        self.five_tick_str_bonus = five_tick_str_bonus
         self.gear_multiplier = gear_multiplier
         self.static_crush_weapon = static_crush_weapon
-        self.five_tick_weapon = five_tick_weapon
+        self.five_tick_weapon_style = five_tick_weapon_style
 
 
 # Function that will modify the gear setup based on selections from the gui prompt
@@ -318,46 +316,43 @@ def gear_selection():
         attack_gear += 4
         strength_gear += 2
     if fang:
-        five_tick_weapon = stab
+        five_tick_weapon_style = stab
     else:
         if inq:
-            five_tick_weapon = crush
+            five_tick_weapon_style = crush
         else:
-            five_tick_weapon = slash
-    loadout_adjuster(attack_gear, strength_gear, five_tick_weapon)
+            five_tick_weapon_style = slash
+    loadout_adjuster(attack_gear, strength_gear, five_tick_weapon_style)
     return loadout
 
 
 def loadout_adjuster(att_modifier, str_modifier, five_tick_style):
-    loadout_list = [loadout.dwh_str_bonus, loadout.four_tick_str_bonus, loadout.fang_str_bonus, loadout.scy_str_bonus,
-                    loadout.dwh_att_bonus, loadout.four_tick_att_bonus, loadout.fang_att_bonus, loadout.scy_att_bonus]
-    loadout_list[:3] = [i + str_modifier for i in loadout_list[:3]]
-    loadout_list[4:] = [i + att_modifier for i in loadout_list[4:]]
-    (loadout.dwh_str_bonus, loadout.four_tick_str_bonus, loadout.fang_str_bonus, loadout.scy_str_bonus,
-     loadout.dwh_att_bonus, loadout.four_tick_att_bonus, loadout.fang_att_bonus, loadout.scy_att_bonus) = loadout_list
-    loadout.five_tick_weapon = five_tick_style
+    loadout_list = [loadout.dwh_str_bonus, loadout.four_tick_str_bonus, loadout.five_tick_str_bonus,
+                    loadout.dwh_att_bonus, loadout.four_tick_att_bonus, loadout.five_tick_att_bonus]
+    loadout_list[:2] = [i + str_modifier for i in loadout_list[:2]]
+    loadout_list[3:] = [i + att_modifier for i in loadout_list[3:]]
+    (loadout.dwh_str_bonus, loadout.four_tick_str_bonus, loadout.five_tick_str_bonus,
+     loadout.dwh_att_bonus, loadout.four_tick_att_bonus, loadout.five_tick_att_bonus) = loadout_list
+    loadout.five_tick_weapon_style = five_tick_style
     return
 
 
 # These are the default loadouts that will be selected based on gui selection
 if inq:
-    loadout = Gear(dwh_att_bonus=183, dwh_str_bonus=136, four_tick_att_bonus=183, four_tick_str_bonus=140,
-                   fang_att_bonus=155, fang_str_bonus=154, scy_att_bonus=90, scy_str_bonus=118, gear_multiplier=1.025,
-                   static_crush_weapon=crush, five_tick_weapon='')
-    gear_selection()
-    print('loadout bonuses selected: ', loadout.dwh_att_bonus, loadout.dwh_str_bonus, loadout.four_tick_att_bonus,
-          loadout.four_tick_str_bonus, loadout.fang_att_bonus, loadout.fang_str_bonus, loadout.scy_att_bonus,
-          loadout.scy_str_bonus, loadout.gear_multiplier)
-    print('----------')
+    if fang:
+        gear_vals = [183, 136, 183, 140, 155, 154, 1.025, crush, '']
+    else:
+        gear_vals = [183, 136, 183, 140, 90, 118, 1.025, crush, '']
 else:
-    loadout = Gear(dwh_att_bonus=151, dwh_str_bonus=144, four_tick_att_bonus=151, four_tick_str_bonus=148,
-                   fang_att_bonus=163, fang_str_bonus=162, scy_att_bonus=138, scy_str_bonus=126, gear_multiplier=1,
-                   static_crush_weapon=crush, five_tick_weapon='')
-    gear_selection()
-    print('loadout bonuses selected: ', loadout.dwh_att_bonus, loadout.dwh_str_bonus, loadout.four_tick_att_bonus,
-          loadout.four_tick_str_bonus, loadout.fang_att_bonus, loadout.fang_str_bonus, loadout.scy_att_bonus,
-          loadout.scy_str_bonus, loadout.gear_multiplier)
-    print('----------')
+    if fang:
+        gear_vals = [151, 144, 151, 148, 163, 162, 1, crush, '']
+    else:
+        gear_vals = [151, 144, 151, 148, 138, 126, 1, crush, '']
+loadout = Gear(*gear_vals)
+gear_selection()
+print('loadout bonuses selected: ', loadout.dwh_att_bonus, loadout.dwh_str_bonus, loadout.four_tick_att_bonus,
+          loadout.four_tick_str_bonus, loadout.five_tick_att_bonus, loadout.five_tick_str_bonus, loadout.gear_multiplier)
+print('----------')
 
 
 # These are the stats of the npc itself and its active statuses
@@ -382,34 +377,20 @@ class NPC:
 
 
 # This damage value selection based on adjusted gear and whether the hit chance function determines a hit
-def hit_value_roll(spec_bonus, four_tick, five_tick, max_hit_modifier=1.0):
-    def strength_selector():
-        if spec_bonus:
-            return loadout.dwh_str_bonus
-        elif four_tick:
-            return loadout.four_tick_str_bonus
-        elif five_tick:
-            if fang:
-                return loadout.fang_str_bonus
-            elif scythe:
-                return loadout.scy_str_bonus
-        else:
-            raise ValueError("Error in strength selector function")
-
-
-    damage_selection = 0
-    if spec_bonus:
+def hit_value_roll(attack_type, max_hit_modifier=1.0):
+    str_dict = {'spec': loadout.dwh_str_bonus, 'four_tick': loadout.four_tick_str_bonus, 'five_tick': loadout.five_tick_str_bonus}
+    if attack_type == 'spec':
         max_hit = int(
-            int(0.5 + effective_spec_strength_lvl * ((strength_selector() + 64) / 640)) * 1.5 * loadout.gear_multiplier)
+            int(0.5 + effective_spec_strength_lvl * ((str_dict[attack_type] + 64) / 640)) * 1.5 * loadout.gear_multiplier)
         return int(random.randint(0, max_hit))
     else:
-        max_hit = int(int(0.5 + effective_strength_lvl * ((strength_selector() + 64) / 640)) * loadout.gear_multiplier)
-        if four_tick:
+        max_hit = int(int(0.5 + effective_strength_lvl * ((str_dict[attack_type] + 64) / 640)) * loadout.gear_multiplier)
+        if attack_type == 'four_tick':
             return int(random.randint(0, max_hit))
-        elif five_tick:
+        elif attack_type == 'five_tick':
             if fang:
-                max_hit = int(((0.5 + effective_strength_lvl * ((strength_selector() + 64) / 640)) * max_hit_modifier))
-                min_hit = int((0.5 + effective_strength_lvl * ((strength_selector() + 64) / 640)) * .15)
+                max_hit = int(((0.5 + effective_strength_lvl * ((str_dict[attack_type] + 64) / 640)) * max_hit_modifier))
+                min_hit = int((0.5 + effective_strength_lvl * ((str_dict[attack_type] + 64) / 640)) * .15)
                 return int(random.randint(min_hit, max_hit))
             else:
                 return int(random.randint(0, int(max_hit * max_hit_modifier)))
@@ -427,24 +408,12 @@ def adjust_def_integer():
 
 
 # Attack roll function that determines the roll that will be used in hit chance based on gear loadout and NPC stats
-def attack_roll(spec_attack, four_tick, five_tick, multiplier):
-    def attack_selector():
-        if spec_attack:
-            return loadout.dwh_att_bonus
-        elif four_tick:
-            return loadout.four_tick_att_bonus
-        elif five_tick:
-            if fang:
-                return loadout.fang_att_bonus
-            elif scythe:
-                return loadout.scy_att_bonus
-        else:
-            raise ValueError("Error in attack selector function")
-
-    if spec_attack:
-        max_attack_roll_basic = int(effective_spec_attack_lvl * (attack_selector() + 64))
+def attack_roll(attack_type, multiplier):
+    att_dict = {'spec': loadout.dwh_att_bonus, 'four_tick': loadout.four_tick_att_bonus, 'five_tick': loadout.five_tick_att_bonus}
+    if attack_type == 'spec':
+        max_attack_roll_basic = int(effective_spec_attack_lvl * (att_dict[attack_type] + 64))
     else:
-        max_attack_roll_basic = int(effective_attack_lvl * (attack_selector() + 64))
+        max_attack_roll_basic = int(effective_attack_lvl * (att_dict[attack_type] + 64))
     if lightbearer_check.get():
         if fang:
             max_attack_roll = int(max_attack_roll_basic * multiplier)
@@ -457,25 +426,25 @@ def attack_roll(spec_attack, four_tick, five_tick, multiplier):
 
 
 # Function that will take the attack roll and defense roll and determine hit or miss of main damage phase
-def hit_chancer(spec, four_tick, five_tick, fang_spec_hit, status):
+def hit_chancer(attack_type, fang_spec_hit, status):
     attack_roll_check = 0
-    def_roll_check = defence_roll(spec, four_tick, five_tick, status)
-    if spec:
-        attack_roll_check = attack_roll(True, False, False, multiplier=1.0)
-    elif four_tick:
-        attack_roll_check = attack_roll(False, True, False, multiplier=1.0)
-    elif five_tick:
+    def_roll_check = defence_roll(attack_type, status)
+    if attack_type == 'spec':
+        attack_roll_check = attack_roll('spec', multiplier=1.0)
+    elif attack_type == 'four_tick':
+        attack_roll_check = attack_roll('four_tick', multiplier=1.0)
+    elif attack_type == 'five_tick':
         if fang:
             if fang_spec_hit:
-                attack_roll_check = attack_roll(False, False, True, multiplier=1.5)
-                attack_roll_check2 = attack_roll(False, False, True, multiplier=1.5)
+                attack_roll_check = attack_roll('five_tick', multiplier=1.5)
+                attack_roll_check2 = attack_roll('five_tick', multiplier=1.5)
             else:
-                attack_roll_check = attack_roll(False, False, True, multiplier=1.0)
-                attack_roll_check2 = attack_roll(False, False, True, multiplier=1.0)
+                attack_roll_check = attack_roll('five_tick', multiplier=1.0)
+                attack_roll_check2 = attack_roll('five_tick', multiplier=1.0)
             roll_list = [attack_roll_check, attack_roll_check2]
             return True if any(i > def_roll_check for i in roll_list) else False
         else:
-            attack_roll_check = attack_roll(False, False, True, multiplier=1.0)
+            attack_roll_check = attack_roll('five_tick', multiplier=1.0)
     return True if attack_roll_check > def_roll_check else False
 
 
@@ -513,14 +482,14 @@ def hammer_missed():
 
 # Function that will take the attack roll and defense roll and determine hit or miss of specs for initial def reduction
 def spec_hit(status):
-    damage_val = hit_value_roll(spec_bonus=True, four_tick=False, five_tick=False)
+    damage_val = hit_value_roll('spec')
     tekton.lower_hp(damage_val)
     tekton.lower_def(int((tekton.defence * .3)))
     adjust_def_integer()
     hit_metrics.hammer_hit_count += 1
-    defence_roll(True, False, False, status)
-    if hit_chancer(True, False, False, False, status):
-        damage_val = hit_value_roll(spec_bonus=True, four_tick=False, five_tick=False)
+    defence_roll('spec', status)
+    if hit_chancer('spec', False, status):
+        damage_val = hit_value_roll('spec')
         tekton.lower_hp(damage_val)
         if damage_val > 0:
             tekton.lower_def(int((tekton.defence * .3)))
@@ -540,9 +509,9 @@ def four_tick_hit(instances, status):
             hit_metrics.four_tick_hit_counter += 1
         else:
             hit_metrics.four_tick_hit_counter += 0
-        defence_roll(False, True, False, status)
-        if hit_chancer(False, True, False, False, status):
-            damage_val = hit_value_roll(spec_bonus=False, four_tick=True, five_tick=False)
+        defence_roll('four_tick', status)
+        if hit_chancer('four_tick', False, status):
+            damage_val = hit_value_roll('four_tick')
             tekton.lower_hp(damage_val)
         else:
             damage_val = 0
@@ -551,8 +520,8 @@ def four_tick_hit(instances, status):
 
 # Function that will be called to make each scythe hit roll seperately for each of the 3 instances of dmg
 def scy_dmg(step_down, status):
-    if hit_chancer(False, False, True, False, status):
-        damage_val = hit_value_roll(False, four_tick=False, five_tick=True, max_hit_modifier=step_down)
+    if hit_chancer('five_tick', False, status):
+        damage_val = hit_value_roll('five_tick', max_hit_modifier=step_down)
         tekton.lower_hp(damage_val)
     else:
         damage_val = 0
@@ -563,19 +532,19 @@ def scy_dmg(step_down, status):
 # Function that will be called to indicate number of hits in damage phase for 5 tick weapon
 def five_tick_hit(instances, status, fang_spec_pass_var):
     for _ in range(instances):
-        defence_roll(False, False, True, status)
+        defence_roll('five_tick', status)
         if tekton.hp > 0:
             hit_metrics.five_tick_hit_counter += 1
         if fang:
             if fang_spec_pass_var:
-                if hit_chancer(False, False, True, fang_spec_pass_var, status):
-                    damage_val = hit_value_roll(spec_bonus=False, four_tick=False, five_tick=True, max_hit_modifier=1)
+                if hit_chancer('five_tick', fang_spec_pass_var, status):
+                    damage_val = hit_value_roll('five_tick', max_hit_modifier=1)
                     tekton.lower_hp(damage_val)
                 else:
                     damage_val = 0
                     tekton.lower_hp(damage_val)
-            elif hit_chancer(False, False, True, fang_spec_pass_var, status):
-                damage_val = hit_value_roll(spec_bonus=False, four_tick=False, five_tick=True, max_hit_modifier=.85)
+            elif hit_chancer('five_tick', fang_spec_pass_var, status):
+                damage_val = hit_value_roll('five_tick', max_hit_modifier=.85)
                 tekton.lower_hp(damage_val)
             else:
                 damage_val = 0
@@ -584,8 +553,8 @@ def five_tick_hit(instances, status, fang_spec_pass_var):
             for i in [1, .5, .25]:
                 scy_dmg(i, status)
         else:
-            if hit_chancer(False, False, True, False, status):
-                damage_val = hit_value_roll(False, four_tick=False, five_tick=True)
+            if hit_chancer('five_tick', False, status):
+                damage_val = hit_value_roll('five_tick')
                 tekton.lower_hp(damage_val)
             else:
                 damage_val = 0
@@ -635,9 +604,7 @@ def anvil_adjustment():
     if tekton.hp > 0:
         cycle_select = random.randint(3, 6)
         hit_metrics.idle_time += ((cycle_select * 3) + 10)
-    else:
-        return tekton.hp
-    return tekton.hp
+    return
 
 
 def min_regen():
@@ -668,14 +635,12 @@ def pre_anvil():
     if four_and_five:
         spec_hit(False)
         hammer_check()
-        # hammer_count_list.append(hit_metrics.hammer_hit_count)
         for four_num, five_num in [(3, 1), (1, 2)]:
             four_tick_hit(four_num, False)
             five_tick_hit(five_num, False, False)
     else:
         spec_hit(False)
         hammer_check()
-        # hammer_count_list.append(hit_metrics.hammer_hit_count)
         five_tick_hit(6, False, False)
     return
 
@@ -728,16 +693,16 @@ def post_anvil(fang_lb_spec, spec_alternation):
     return
 
 
-def defence_roll(spec, four_tick, five_tick, enraged):
+def defence_roll(attack_type, enraged):
     test_weapon = ""
     if enraged:
         tekton.stab_def, tekton.slash_def, tekton.crush_def = [280, 280, 180]
     else:
         tekton.stab_def, tekton.slash_def, tekton.crush_def = [155, 165, 105]
-    if spec or four_tick:
+    if attack_type == 'spec' or attack_type == 'four_tick':
         test_weapon = loadout.static_crush_weapon
-    elif five_tick:
-        test_weapon = loadout.five_tick_weapon
+    elif attack_type == 'five_tick':
+        test_weapon = loadout.five_tick_weapon_style
     def_roll_dict = {'crush': math.ceil((tekton.defence + 9) * (tekton.crush_def + 64)),
                      'stab': math.ceil((tekton.defence + 9) * (tekton.stab_def + 64)),
                      'slash': math.ceil((tekton.defence + 9) * (tekton.slash_def + 64))}
@@ -832,50 +797,44 @@ if sql_import.get():
         # noinspection PyUnboundLocalVariable
         import_df.to_sql('tekton_results', con=conn, if_exists='append', index_label='ID')
 
-no_anvils = len(results_df[(results_df['anvil_count'] == 0)])
-one_anvils = len(results_df[(results_df['anvil_count'] == 1)])
-two_anvils = len(results_df[(results_df['anvil_count'] == 2)])
-three_or_more_anvils = len(results_df[(results_df['anvil_count'] >= 3)])
-no_h_one_a = len(results_df[(results_df['hammer_count'] == 0) & (results_df['anvil_count'] == 1)])
-no_hammer_total = len(results_df[(results_df['hammer_count'] == 0)].copy())
-one_h_one_a = len(results_df[(results_df['hammer_count'] == 1) & (results_df['anvil_count'] == 1)])
-one_hammer_total = len(results_df[(results_df['hammer_count'] == 1)])
-two_h_one_a = len(results_df[(results_df['hammer_count'] == 2) & (results_df['anvil_count'] == 1)])
-two_hammer_total = len(results_df[(results_df['hammer_count'] == 2)][['hammer_count']])
+tick_times = results_df['tick_times'].tolist()
+no_anvils = len(results_df[(results_df['anvil_count'] == 0)].copy())
+one_anvils = len(results_df[(results_df['anvil_count'] == 1)].copy())
+two_anvils = len(results_df[(results_df['anvil_count'] == 2)].copy())
+three_or_more_anvils = len(results_df[(results_df['anvil_count'] >= 3)].copy())
+one_h_one_a = len(results_df[(results_df['hammer_count'] == 1) & (results_df['anvil_count'] == 1)].copy())
+avg_hp_one_h = results_df[results_df['hammer_count'] == 1].copy()
+avg_hp_one_h = round(avg_hp_one_h['hp_after_pre_anvil'].mean(), 2)
+avg_hp_two_h = results_df[results_df['hammer_count'] == 2].copy()
+avg_hp_two_h = round(avg_hp_two_h['hp_after_pre_anvil'].mean(), 2)
+one_hammer_total = len(results_df[(results_df['hammer_count'] == 1)].copy())
+two_h_one_a = len(results_df[(results_df['hammer_count'] == 2) & (results_df['anvil_count'] == 1)].copy())
+two_hammer_total = len(results_df[(results_df['hammer_count'] == 2)][['hammer_count']].copy())
 tick_times_df = results_df.copy()
 tick_times_df['completion'] = 1
 tick_times_df = tick_times_df[['tick_times', 'completion']]
-tick_times_one_anvil = tick_times_df[tick_times_df['tick_times'] <= 150][['tick_times']]
-print(len(tick_times_df))
-print(len(tick_times_one_anvil))
+tick_times_one_anvil = tick_times_df[tick_times_df['tick_times'] <= 150][['tick_times']].copy()
 tick_times_raw = tick_times
 hist2, bin_edges2 = np.histogram(tick_times_raw, density=True)
 diff_bin_edge = np.diff(bin_edges2)
 data_ = hist2 * diff_bin_edge
 
 cum_cdf_raw = np.cumsum(data_, axis=0)
-sub_115 = len(results_df[(results_df['tick_times']<=125)])
-sub_100 = len(results_df[(results_df['tick_times']<=100)])
-
+sub_115 = len(results_df[(results_df['tick_times'] <= 125)].copy())
+sub_100 = len(results_df[(results_df['tick_times'] <= 100)].copy())
 
 def output_formatter(numerator, divisor, long):
     if long:
-        return f'{numerator}, {round(((numerator / divisor) * 100), 2)}%'
+        output = f'{str(numerator)}, {str(round(((numerator / divisor) * 100), 2))}%'
     else:
-        return f'{round(((numerator / divisor) * 100), 2)}%'
-
+        output = f'{str(round(((numerator / divisor) * 100), 2))}%'
+    return output
 
 no_anvil_num = output_formatter(no_anvils, trials, True)
 one_anvil_num = output_formatter(one_anvils, trials, True)
 two_anvil_num = output_formatter(two_anvils, trials, True)
 three_anvil_num = output_formatter(three_or_more_anvils, trials, True)
-no_ham_rate_tot = output_formatter(no_h_one_a, trials, False)
-one_ham_rate_tot = output_formatter(one_h_one_a, trials, False)
-two_ham_rate_tot = output_formatter(two_h_one_a, trials, False)
 
-one_ham_reset = output_formatter((one_h_one_a + two_h_one_a), (one_hammer_total + two_hammer_total), False)
-two_ham_reset = output_formatter(two_h_one_a, two_hammer_total, False)
-no_ham_rate = output_formatter(no_h_one_a, one_anvils, True)
 one_ham_rate = output_formatter(one_h_one_a, one_anvils, True)
 two_ham_rate = output_formatter(two_h_one_a, one_anvils, True)
 sub_115_df = output_formatter(sub_115, one_anvils, True)
@@ -883,12 +842,12 @@ sub_100_df = output_formatter(sub_100, one_anvils, True)
 
 table_dataframe = pd.DataFrame({f'Trials: {trials}': ['No Anvil', 'One Anvil', 'Two Anvil', 'Three or More'],
                                 'Total, % Total': [no_anvil_num, one_anvil_num, two_anvil_num, three_anvil_num],
-                                'Total, Sub 1:15 %': ['N/A', sub_115_df, '0', '0'],
-                                'Total, Sub 1:00 %': ['N/A', sub_100_df, '0', '0']})
-table_dataframe2 = pd.DataFrame({f'Trials: {trials}': ['No Hammer', 'One Hammer', 'Two Hammer'],
-                                 'Total, % of One Anvils': [no_ham_rate, one_ham_rate, two_ham_rate],
-                                 '% of Total Trials': [no_ham_rate_tot, one_ham_rate_tot, two_ham_rate_tot],
-                                 (r"One Anvil Ham. $\subset$ Total Ham."): ['N/A', f'{one_ham_reset} 1 & 2 Ham.', f'{two_ham_reset} 2 Ham. only']})
+                                'Total, Sub 1:15 %': [no_anvil_num, sub_115_df, 'N/A', 'N/A'],
+                                'Total, Sub 1:00 %': [no_anvil_num, sub_100_df, 'N/A', 'N/A']})
+table_dataframe2 = pd.DataFrame({f'Trials: {trials}': ['One Hammer', 'Two Hammer'],
+                                    r"Amount for Total Trials": [one_hammer_total, two_hammer_total],
+                                    'Total, % of One Anvils': [one_ham_rate, two_ham_rate],
+                                    r"HP Avg Pre anvil": [avg_hp_one_h, avg_hp_two_h]})
 minutes_list = ['0:45', '0:48', '0:51', '0:54', '0:57', '1:00', '1:03', '1:06', '1:09', '1:12', '1:15',
                 '1:18', '1:21', '1:24', '1:27', '1:30', '1:33', '1:36', '1:39', '1:42', '1:45', '1:48',
                 '1:51', '1:54', '1:57', '2:00', '2:03', '2:06', '2:09', '2:12', '2:15', '2:18', '2:21',
@@ -930,7 +889,7 @@ mpl_table.set_fontsize(9)
 
 mpl_table2 = ax2.table(cellText=table_dataframe2.values,
                        colLabels=table_dataframe2.columns, cellLoc='center', rowLoc='center', loc='upper right',
-                       cellColours=colors_list[0:3], colColours=col_color)
+                       cellColours=colors_list[0:2], colColours=col_color)
 mpl_table2.auto_set_font_size(False)
 mpl_table2.set_fontsize(9)
 ax2.axis(False)
